@@ -1,14 +1,15 @@
-/* Navbar Styles - Based on Figma Design */
+/* Navbar Styles - Updated based on Figma Design */
 .navbar {
-  background: linear-gradient(135deg, #70D9FF 0%, #A8E6FF 100%);
+  background: #FFFFFF;
   width: 100%;
   max-width: 1360px;
   height: 114px;
   border-radius: 35px;
   margin: 0 auto;
-  box-shadow: 0 4px 20px rgba(112, 217, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
   z-index: 1000;
+  border: 1px solid rgba(112, 217, 255, 0.1);
 }
 
 .navbar-container {
@@ -32,25 +33,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  backdrop-filter: blur(10px);
+  width: 32px;
+  height: 32px;
 }
 
 .logo-text {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 24px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #70D9FF;
   text-decoration: none;
   letter-spacing: -0.5px;
   transition: all 0.3s ease;
 }
 
 .logo-text:hover {
-  color: #000000;
+  color: #5bc4e7;
   transform: translateY(-1px);
 }
 
@@ -69,23 +67,22 @@
   font-weight: 500;
   color: #000000;
   text-decoration: none;
-  padding: 12px 20px;
-  border-radius: 25px;
+  padding: 12px 16px;
+  border-radius: 20px;
   transition: all 0.3s ease;
   position: relative;
   white-space: nowrap;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.3);
-  color: #FFFFFF;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background: rgba(112, 217, 255, 0.1);
+  color: #70D9FF;
+  transform: translateY(-1px);
 }
 
 .nav-link.active {
-  background: rgba(255, 255, 255, 0.4);
-  color: #FFFFFF;
+  background: rgba(112, 217, 255, 0.15);
+  color: #70D9FF;
   font-weight: 600;
 }
 
@@ -98,26 +95,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #FFFFFF;
-  color: #000000;
+  background: #70D9FF;
+  color: #FFFFFF;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
   padding: 12px 24px;
   border-radius: 25px;
-  border: 2px solid transparent;
+  border: 2px solid #70D9FF;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(112, 217, 255, 0.3);
   min-width: 120px;
 }
 
 .btn-connexion:hover {
-  background: transparent;
-  color: #FFFFFF;
-  border-color: #FFFFFF;
+  background: #5bc4e7;
+  border-color: #5bc4e7;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(112, 217, 255, 0.4);
 }
 
 /* Responsive Design */
@@ -155,7 +151,7 @@
     order: 2;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
   }
   
   .nav-link {

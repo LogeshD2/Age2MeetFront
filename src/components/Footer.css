@@ -1,9 +1,11 @@
-/* Footer Styles */
+/* Footer Styles - Based on Figma Design */
 .footer {
-  background: linear-gradient(135deg, #70D9FF 0%, #A8E6FF 100%);
+  background: #FFFFFF;
   margin-top: 40px;
-  padding: 40px 0 20px;
-  border-radius: 35px 35px 0 0;
+  padding: 40px 0;
+  width: 100%;
+  border-top: 1px solid rgba(112, 217, 255, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .footer-container {
@@ -14,64 +16,146 @@
 
 .footer-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-  margin-bottom: 20px;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+  gap: 40px;
+  align-items: start;
 }
 
-.footer-section h3 {
-  color: #FFFFFF;
-  font-size: 1.8rem;
+/* Logo Section */
+.footer-section:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.footer-section:first-child h3 {
+  color: #70D9FF;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 15px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.footer-section h4 {
-  color: #213547;
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 15px;
+.footer-section:first-child h3::before {
+  content: "💙";
+  font-size: 1.5rem;
 }
 
-.footer-section p {
+.footer-section:first-child p {
   color: #213547;
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
+  font-weight: 400;
+}
+
+/* Contact Info */
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.footer-contact span {
+  color: #213547;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: #70D9FF;
+  text-underline-offset: 3px;
+}
+
+.footer-contact .contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #213547;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Other Sections */
+.footer-section h4 {
+  color: #213547;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  text-decoration: underline;
+  text-decoration-color: #70D9FF;
+  text-underline-offset: 3px;
 }
 
 .footer-section ul {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.footer-section ul li {
-  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .footer-section ul li a {
   color: #213547;
   text-decoration: none;
   font-size: 14px;
+  font-weight: 400;
   transition: all 0.3s ease;
-  padding: 4px 0;
-  display: inline-block;
+  display: block;
+  padding: 2px 0;
 }
 
 .footer-section ul li a:hover {
-  color: #FFFFFF;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transform: translateX(5px);
+  color: #70D9FF;
+  transform: translateX(3px);
+}
+
+/* RGPD Section */
+.footer-section:last-child p {
+  color: #213547;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Copyright */
+.footer-bottom {
+  border-top: 1px solid rgba(112, 217, 255, 0.2);
+  margin-top: 30px;
+  padding-top: 20px;
+  text-align: center;
+}
+
+.footer-bottom p {
+  color: #213547;
+  font-size: 12px;
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.7;
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .footer-content {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 30px;
+  }
+  
+  .footer-section:last-child {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .footer {
+    padding: 30px 0;
     margin: 20px 10px 0;
     border-radius: 20px 20px 0 0;
-    padding: 30px 0 15px;
   }
   
   .footer-container {
@@ -79,25 +163,40 @@
   }
   
   .footer-content {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
   }
   
-  .footer-section h3 {
-    font-size: 1.5rem;
+  .footer-section:first-child {
+    grid-column: 1 / -1;
+    text-align: center;
   }
   
-  .footer-section h4 {
-    font-size: 1.1rem;
+  .footer-section:last-child {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: 20px;
   }
 }
 
 @media (max-width: 480px) {
+  .footer {
+    margin: 10px;
+    border-radius: 15px 15px 0 0;
+  }
+  
   .footer-container {
     padding: 0 15px;
   }
   
-  .footer-section h3 {
-    font-size: 1.3rem;
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .footer-section:first-child h3 {
+    font-size: 1.5rem;
+    justify-content: center;
   }
 } 
