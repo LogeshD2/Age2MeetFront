@@ -4,7 +4,6 @@
   line-height: 1.5;
   font-weight: 400;
   color: #213547;
-  background-color: #f8f9fa;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -21,12 +20,14 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #B2F0ED 0%, #6AFDB8 100%);
+  background-attachment: fixed;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  background: transparent;
 }
 
 a {
