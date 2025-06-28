@@ -1,31 +1,82 @@
 .hero-section {
   padding: 80px 20px;
-  background: linear-gradient(to right, #667eea, #764ba2);
-  color: white;
+  background: linear-gradient(135deg, #70D9FF 0%, #A8E6FF 50%, #FFFFFF 100%);
+  color: #213547;
   text-align: center;
+  margin: 20px auto;
+  max-width: 1360px;
+  border-radius: 35px;
+  box-shadow: 0 8px 30px rgba(112, 217, 255, 0.2);
 }
 
 .hero-title {
   font-size: 3rem;
   margin-bottom: 1rem;
+  color: #213547;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
 }
 
 .hero-subtitle {
   font-size: 1.5rem;
   margin-bottom: 2rem;
+  color: #213547;
+  font-weight: 400;
+  opacity: 0.9;
 }
 
 .hero-button {
-  background-color: white;
-  color: #764ba2;
-  border: none;
-  padding: 12px 24px;
-  font-size: 1rem;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0F0F0 100%);
+  color: #213547;
+  border: 2px solid #70D9FF;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(112, 217, 255, 0.3);
 }
 
 .hero-button:hover {
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, #70D9FF 0%, #A8E6FF 100%);
+  color: #FFFFFF;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(112, 217, 255, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 60px 20px;
+    margin: 10px;
+    border-radius: 20px;
+  }
+  
+  .hero-title {
+    font-size: 2.2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .hero-button {
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 40px 15px;
+  }
+  
+  .hero-title {
+    font-size: 1.8rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
 }
