@@ -12,7 +12,7 @@ const Footer = () => (
           
           <div className="footer-contact">
             <span>Coordonnées</span>
-            <div className="contact-item">
+            <div className="contact-item"> #contact 
               📧 contact@age2meet.com
             </div>
             <div className="contact-item">
