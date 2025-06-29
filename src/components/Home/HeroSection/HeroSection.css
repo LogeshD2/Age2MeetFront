@@ -1,7 +1,7 @@
 .hero-section {
   padding: 80px 20px;
-  background: linear-gradient(to right, #667eea, #764ba2);
-  color: white;
+  background: transparent;
+  color: #333;
   text-align: center;
 }
 
@@ -16,8 +16,8 @@
 }
 
 .hero-button {
-  background-color: white;
-  color: #764ba2;
+  background-color: #70D9FF;
+  color: white;
   border: none;
   padding: 12px 24px;
   font-size: 1rem;
@@ -27,5 +27,7 @@
 }
 
 .hero-button:hover {
-  background-color: #f0f0f0;
+  background-color: #5bc4e7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(112, 217, 255, 0.3);
 }
