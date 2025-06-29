@@ -1,0 +1,62 @@
+/* VideoTutorial.css */
+
+.video-tutorial-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  border-radius: 30px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Arial', sans-serif;
+  margin-bottom: 100px;
+}
+
+.page-title {
+  color: #2c5282;
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 60px;
+  text-align: center;
+}
+
+.video-wrapper {
+  /* background: #f8f9fa;
+  border-radius: 30px;
+  padding: 80px 60px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0; */
+  width: 100%;
+  height: 100%;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  border: 4px solid #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  outline: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .video-tutorial-container {
+    padding: 20px 10px;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    margin-bottom: 40px;
+  }
+  
+  .video-wrapper {
+    padding: 40px 30px;
+  }
+  
+  .video-player {
+    width: 100%;
+    max-width: 400px;
+    height: 280px;
+  }
+}

@@ -1,0 +1,207 @@
+/* ActivitiesPage.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #a8e6cf 0%, #dcedc8 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.activities-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.activities-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.activities-title {
+  color: #2c5282;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 40px;
+  text-align: left;
+}
+
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+}
+
+.activity-card {
+  background: #f7fafc;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.activity-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.activity-image {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+  border-radius: 12px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.activity-emoji {
+  font-size: 3rem;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.activity-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.activity-title {
+  color: #2d3748;
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.activity-details {
+  margin-bottom: 20px;
+}
+
+.activity-details p {
+  color: #4a5568;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.activity-details strong {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.activity-description {
+  margin-bottom: 25px;
+  flex-grow: 1;
+}
+
+.activity-description p {
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.activity-description strong {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.register-button {
+  background: linear-gradient(135deg, #4fd1c7 0%, #63b3ed 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-self: center;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(79, 209, 199, 0.3);
+  margin-top: auto;
+}
+
+.register-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 209, 199, 0.4);
+  background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%);
+}
+
+.register-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .activities-container {
+    padding: 10px;
+  }
+  
+  .activities-card {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .activities-title {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  
+  .activities-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .activity-card {
+    padding: 20px;
+  }
+  
+  .activity-title {
+    font-size: 1.1rem;
+  }
+  
+  .activity-image {
+    height: 100px;
+  }
+  
+  .activity-emoji {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .activities-title {
+    font-size: 1.75rem;
+  }
+  
+  .activity-title {
+    font-size: 1rem;
+  }
+  
+  .register-button {
+    padding: 10px 25px;
+    font-size: 0.9rem;
+  }
+}
