@@ -1,0 +1,153 @@
+/* LoginPage.css - Préfixe 'lp-' pour éviter les collisions */
+.lp-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #a8e6cf 0%, #88d8c0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.lp-card {
+  background: white;
+  border-radius: 24px;
+  padding: 60px 50px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  text-align: left;
+}
+
+.lp-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 50px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.lp-highlight {
+  color: #5dade2;
+}
+
+.lp-form {
+  margin-bottom: 30px;
+}
+
+.lp-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.lp-form-group {
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.lp-form-label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.lp-required {
+  color: #e74c3c;
+}
+
+.lp-form-input {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid #ecf0f1;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.lp-form-input:focus {
+  outline: none;
+  border-color: #5dade2;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.1);
+}
+
+.lp-btn-primary {
+  background: #5dade2;
+  color: white;
+  border: none;
+  padding: 18px 40px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.lp-btn-primary:hover {
+  background: #4a90c2;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(93, 173, 226, 0.3);
+}
+
+.lp-btn-secondary {
+  background: #5dade2;
+  color: white;
+  border: none;
+  padding: 16px 35px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.lp-btn-secondary:hover {
+  background: #4a90c2;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(93, 173, 226, 0.3);
+}
+
+.lp-btn-arrow {
+  font-size: 1.2rem;
+  font-weight: normal;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .lp-card {
+    padding: 40px 30px;
+    margin: 10px;
+  }
+  
+  .lp-title {
+    font-size: 2rem;
+    margin-bottom: 40px;
+  }
+  
+  .lp-form-input {
+    padding: 14px 16px;
+  }
+  
+  .lp-buttons-container {
+    align-items: stretch;
+  }
+  
+  .lp-btn-primary,
+  .lp-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}

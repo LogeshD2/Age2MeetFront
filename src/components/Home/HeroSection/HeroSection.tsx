@@ -1,7 +1,7 @@
 import React from 'react';
 import './HeroSection.css';
 import { useNavigate } from 'react-router-dom';
-
+import HeroImage from "../../../assets/images/HeroImage.jpeg";
 
 
 const HeroSection = () => {
@@ -44,7 +44,7 @@ const HeroSection = () => {
           <div className="image-section">
             <div className="image-container">
               <img 
-                src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                src={HeroImage}
                 alt="Groupe de seniors heureux" 
                 className="seniors-image"
               />
