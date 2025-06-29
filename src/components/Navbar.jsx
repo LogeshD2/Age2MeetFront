@@ -1,5 +1,6 @@
 // src/components/Navbar.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Navbar.css';
 
 const Navbar = () => (
@@ -15,11 +16,11 @@ const Navbar = () => (
       </div>
       
       <nav className="navbar-nav">
-        <a href="#" className="nav-link">Accueil</a>
-        <a href="#" className="nav-link">Messagerie</a>
-        <a href="#" className="nav-link">Mon agenda</a>
-        <a href="#" className="nav-link">Mon profil</a>
-        <a href="#" className="nav-link">Contact</a>
+        <Link to="/" className="nav-link">Accueil</Link>
+        <Link to="/messagerie" className="nav-link">Messagerie</Link>
+        <Link to="/agenda" className="nav-link">Mon agenda</Link>
+        <Link to="/profil" className="nav-link">Mon profil</Link>
+        <Link to="/contact" className="nav-link">Contact</Link>
       </nav>
       
       <button className="btn-connexion">Connexion</button>
