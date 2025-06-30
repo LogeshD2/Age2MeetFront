@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://age2meet.onrender.com/api';
+const API_BASE_URL = 'https://age2meet.onrender.com/api/docs';
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken');
