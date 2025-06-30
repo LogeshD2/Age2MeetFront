@@ -147,6 +147,7 @@ const MessagerieSection = () => {
           if (prevSelected) {
             const updatedSelected = contactsData.accepted_contacts.find(c => c.id === prevSelected.id);
             if (updatedSelected) {
+              console.log(`📱 Mise à jour statut contact sélectionné: ${prevSelected.name} ${prevSelected.status} → ${updatedSelected.status}`);
               return {
                 ...prevSelected,
                 status: updatedSelected.status || 'offline'
@@ -161,9 +162,9 @@ const MessagerieSection = () => {
     }
   };
 
-  // Rafraîchir les statuts toutes les 2 minutes (plus raisonnable)
+  // Rafraîchir les statuts toutes les 3 secondes (quasi-instantané)
   useEffect(() => {
-    const interval = setInterval(refreshContactStatuses, 120000); // 2 minutes
+    const interval = setInterval(refreshContactStatuses, 3000); // 3 secondes
     return () => clearInterval(interval);
   }, []);
 
