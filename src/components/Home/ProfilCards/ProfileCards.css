@@ -80,11 +80,7 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
-.profiles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 25px;
-}
+/* .profiles-grid plus utilisé avec le défilement continu */
 
 .profile-card {
   background: white;
@@ -94,6 +90,9 @@ body {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-card:hover {
@@ -105,11 +104,13 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  min-height: 100px;
 }
 
 .profile-image-container {
   position: relative;
+  flex-shrink: 0;
 }
 
 .profile-image {
@@ -118,6 +119,8 @@ body {
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #e2e8f0;
+  background-color: #f7fafc;
+  display: block;
 }
 
 .online-indicator {
@@ -183,8 +186,10 @@ body {
 
 .profile-description {
   color: #4a5568;
-  line-height: 1.6;
+  line-height: 1.5;
   font-size: 14px;
+  flex: 1;
+  word-wrap: break-word;
 }
 
 .action-buttons {
@@ -256,4 +261,41 @@ body {
   .profile-name {
     font-size: 20px;
   }
+}
+
+/* Styles pour le défilement continu */
+.profiles-slider {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  height: 480px;
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.profiles-track {
+  display: flex;
+  gap: 30px;
+  animation: scroll-left 50s linear infinite;
+  width: fit-content;
+  padding: 0 20px;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100px);
+  }
+  100% {
+    transform: translateX(calc(-50% - 100px));
+  }
+}
+
+.profiles-track:hover {
+  animation-play-state: paused;
+}
+
+.profile-card {
+  min-width: 340px;
+  max-width: 340px;
+  flex-shrink: 0;
 }

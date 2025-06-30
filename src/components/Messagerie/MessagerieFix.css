@@ -1,0 +1,61 @@
+/* Fix pour les problèmes de messagerie */
+
+/* Correction du statut - supprime la boîte bizarre */
+.messagerie-page .status {
+  font-size: 0.8rem !important;
+  color: #666 !important;
+  font-weight: normal !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  display: inline !important;
+}
+
+/* Correction du bouton d'envoi - le rend visible */
+.messagerie-page .send-btn {
+  background: #4A90E2 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #4A90E2 !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+}
+
+.messagerie-page .send-btn:disabled {
+  background: #F7F8FA !important;
+  color: #9CA3AF !important;
+  border: 1px solid #E1E5E9 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.messagerie-page .send-btn:not(:disabled):hover {
+  background: #3B82C7 !important;
+}
+
+/* Assure que les actions de message sont visibles */
+.messagerie-page .message-actions {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+/* Fix pour les boutons emoji */
+.messagerie-page .emoji-btn {
+  background: #F7F8FA !important;
+  color: #6B7280 !important;
+  border: 1px solid #E1E5E9 !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+} 

@@ -8,11 +8,11 @@ const Footer = () => (
       <div className="footer-content">
         <div className="footer-section">
           <h3>Age2meet</h3>
-          <p>Des après-midis chaleureux et conviviaux pour créer des liens</p>
+          <p className="tagline-white">Des après-midis chaleureux et conviviaux pour créer des liens</p>
           
           <div className="footer-contact">
             <span>Coordonnées</span>
-            <div className="contact-item"> #contact 
+            <div className="contact-item"> 
               📧 contact@age2meet.com
             </div>
             <div className="contact-item">

@@ -2,6 +2,7 @@ import React from 'react';
 import './HeroSection.css';
 import { useNavigate } from 'react-router-dom';
 import HeroImage from "../../../assets/images/HeroImage.jpeg";
+import logoImage from "../../../assets/images/Age2MeetLogoAcc.png";
 
 
 const HeroSection = () => {
@@ -19,6 +20,10 @@ const HeroSection = () => {
       <div className="container">
         <div className="content-wrapper">
           <div className="text-section">
+            <div className="hero-logo-container">
+              <img src={logoImage} alt="Age2meet" className="hero-logo" />
+            </div>
+            
             <h1 className="main-title">
               Rencontrez,<br />
               partagez, profitez<br />
@@ -32,9 +37,6 @@ const HeroSection = () => {
             </p>
             
             <div className="buttons-container">
-              <button className="btn btn-primary">
-                Découvrir les événements
-              </button>
               <button className="btn btn-secondary" onClick={handleInscription}>
                 Créer un compte
               </button>

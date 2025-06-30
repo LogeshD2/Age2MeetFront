@@ -58,6 +58,10 @@
   font-size: 0.85rem;
 }
 
+.tagline-white {
+  color: #FFFFFF !important;
+}
+
 .footer-section ul {
   list-style: none;
   padding: 0;

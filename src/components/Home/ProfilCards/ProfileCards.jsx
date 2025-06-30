@@ -106,8 +106,61 @@ const ProfileCards = () => {
       verified: false,
       online: true,
       liked: true
+    },
+    {
+      id: 4,
+      name: "Monique",
+      age: 66,
+      rating: 5,
+      description: "Artiste peintre à la retraite, j'aime les expositions et les concerts. Recherche quelqu'un pour partager ma passion pour l'art et la culture.",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+      verified: true,
+      online: true
+    },
+    {
+      id: 5,
+      name: "Pierre",
+      age: 71,
+      rating: 4,
+      description: "Ex-médecin, j'aime la lecture et les échecs. Cherche une compagne intelligente pour des discussions profondes et des moments de complicité.",
+      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face",
+      verified: true,
+      online: false
+    },
+    {
+      id: 6,
+      name: "Claire",
+      age: 69,
+      rating: 5,
+      description: "Passionnée de danse et de musique classique. J'organise des soirées entre amis et cherche quelqu'un pour danser la vie ensemble.",
+      image: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=100&h=100&fit=crop&crop=face",
+      verified: false,
+      online: true
+    },
+    {
+      id: 7,
+      name: "Robert",
+      age: 73,
+      rating: 4,
+      description: "Ancien ingénieur, bricoleur dans l'âme. J'adore la nature et la randonnée. Recherche une compagne pour explorer les sentiers de montagne.",
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+      verified: false,
+      online: true
+    },
+    {
+      id: 8,
+      name: "Sylvie",
+      age: 67,
+      rating: 5,
+      description: "Ancienne institutrice, j'aime lire et tricoter. Très famille, je cherche quelqu'un de tendre pour construire de beaux souvenirs ensemble.",
+      image: "https://images.unsplash.com/photo-1494790108755-2616c047e8d8?w=100&h=100&fit=crop&crop=face",
+      verified: true,
+      online: false
     }
   ];
+
+  // Dupliquer les profils pour un défilement infini
+  const extendedProfiles = [...profiles, ...profiles];
 
   return (
     <div className="app-container">
@@ -116,14 +169,15 @@ const ProfileCards = () => {
           <div className="heart-icon">♥</div>
           <h1>Rencontres Seniors</h1>
         </div>
-        <div className="user-avatar">H</div>
       </header>
 
       <main className="profiles-container">
-        <div className="profiles-grid">
-          {profiles.map(profile => (
-            <ProfileCard key={profile.id} profile={profile} />
-          ))}
+        <div className="profiles-slider">
+          <div className="profiles-track">
+            {extendedProfiles.map((profile, index) => (
+              <ProfileCard key={`${profile.id}-${index}`} profile={profile} />
+            ))}
+          </div>
         </div>
       </main>
     </div>
