@@ -139,13 +139,13 @@ const Navbar = () => {
   };
 
   return (
-    <header className="navbar">
-      <div className="navbar-central-container">
-        <div className="navbar-logo">
+  <header className="navbar">
+    <div className="navbar-central-container">
+      <div className="navbar-logo">
           <img src={logoImage} alt="Age2meet" className="logo-image" />
-        </div>
-        
-        <nav className="navbar-nav">
+      </div>
+      
+      <nav className="navbar-nav">
           <Link to="/" className="nav-link">Accueil</Link>
           <Link to="/messagerie" className="nav-link messagerie-link">
             Messagerie
@@ -158,8 +158,8 @@ const Navbar = () => {
           <Link to="/agenda" className="nav-link">Mon agenda</Link>
           <Link to="/profil" className="nav-link">Mon profil</Link>
           <Link to="/contact" className="nav-link">Contact</Link>
-        </nav>
-        
+      </nav>
+      
         {isLoggedIn ? (
           <button 
             onClick={handleLogout} 
@@ -171,9 +171,9 @@ const Navbar = () => {
         ) : (
           <Link to="/login" className="btn-connexion">Connexion</Link>
         )}
-      </div>
-    </header>
-  );
+    </div>
+  </header>
+);
 };
 
 export default Navbar;

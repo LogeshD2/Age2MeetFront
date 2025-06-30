@@ -34,7 +34,7 @@ const HeroSection = () => {
             <p className="subtitle">
               Des après-midis chaleureux<br />
               et conviviaux pour créer des liens.
-            </p>
+        </p>
             
             <div className="buttons-container">
               <button className="btn btn-secondary" onClick={handleInscription}>

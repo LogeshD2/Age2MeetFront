@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Activities.css';
 
 const ActivitiesPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [registeredActivities, setRegisteredActivities] = useState(() => {
-    const saved = localStorage.getItem('registeredActivities');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [registeredActivities, setRegisteredActivities] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const activities = [
     {
       id: 1,
@@ -44,48 +43,286 @@ const ActivitiesPage = () => {
     }
   ];
 
+  // Vérifier l'état de connexion et charger les inscriptions
+  useEffect(() => {
+    console.log('🎛️ Activities: useEffect monté - installation des listeners');
+    
+    const checkLoginAndLoadData = () => {
+      const token = localStorage.getItem('authToken');
+      const userId = localStorage.getItem('userId');
+      
+      console.log('🔐 Activities: Vérification connexion');
+      console.log('🔐 Token trouvé:', token);
+      console.log('🔐 UserId trouvé:', userId);
+      console.log('🔐 Token valide:', !!token);
+      console.log('🔐 UserId valide:', !!userId);
+      
+      // Temporaire: utiliser seulement userId pour la connexion
+      const isUserLoggedIn = !!userId;
+      console.log('🔐 Résultat isLoggedIn (basé sur userId seulement):', isUserLoggedIn);
+      
+      setIsLoggedIn(isUserLoggedIn);
+      
+      if (userId) { // Utiliser seulement userId
+        // Utilisateur connecté : charger ses inscriptions
+        const userKey = `registeredActivities_${userId}`;
+        const saved = localStorage.getItem(userKey);
+        console.log('🔐 Clé utilisateur:', userKey);
+        console.log('🔐 Inscriptions sauvées:', saved);
+        
+        const savedRegistrations = saved ? JSON.parse(saved) : [];
+        
+        // NOUVELLE VÉRIFICATION : Synchroniser avec l'agenda
+        console.log('🔄 Vérification synchronisation avec l\'agenda...');
+        
+        // Utiliser le nouveau système de stockage utilisateur
+        const userActivities = JSON.parse(localStorage.getItem('userActivities') || '{}');
+        const userAgendaEvents = userActivities[userId]?.agendaEvents || [];
+        
+        console.log('🔄 userActivities:', userActivities);
+        console.log('🔄 userAgendaEvents pour userId', userId, ':', userAgendaEvents);
+        
+        const agendaActivityIds = userAgendaEvents
+          .filter(event => event.isActivity && event.activityId)
+          .map(event => event.activityId);
+        
+        console.log('🔄 IDs activités dans agenda:', agendaActivityIds);
+        console.log('🔄 IDs dans inscriptions:', savedRegistrations);
+        
+        // Garder seulement les inscriptions qui ont encore un événement dans l'agenda
+        const syncedRegistrations = savedRegistrations.filter(id => agendaActivityIds.includes(id));
+        
+        if (syncedRegistrations.length !== savedRegistrations.length) {
+          console.log('🔄 Inscriptions désynchronisées détectées !');
+          console.log('🔄 Anciennes inscriptions:', savedRegistrations);
+          console.log('🔄 Nouvelles inscriptions synchronisées:', syncedRegistrations);
+          
+          // Mettre à jour le localStorage
+          localStorage.setItem(userKey, JSON.stringify(syncedRegistrations));
+          setRegisteredActivities(syncedRegistrations);
+        } else {
+          console.log('🔄 Inscriptions déjà synchronisées');
+          setRegisteredActivities(savedRegistrations);
+        }
+      } else {
+        // Pas connecté : vider les inscriptions
+        console.log('🔐 Utilisateur non connecté - vidage des inscriptions');
+        setRegisteredActivities([]);
+      }
+    };
+
+    checkLoginAndLoadData();
+    
+    // Écouter les changements de connexion
+    window.addEventListener('storage', checkLoginAndLoadData);
+    
+    // NOUVEAU: Écouter les mises à jour depuis l'agenda
+    const handleUserActivitiesUpdate = () => {
+      console.log('🔔 Activities: Événement userActivitiesUpdated reçu - resynchronisation forcée');
+      checkLoginAndLoadData(); // Forcer une nouvelle vérification
+    };
+    
+    window.addEventListener('userActivitiesUpdated', handleUserActivitiesUpdate);
+    
+    // Test de fonctionnement des événements personnalisés
+    console.log('🎛️ Activities: Test du système d\'événements...');
+    const testEvent = () => {
+      console.log('🧪 Test événement reçu !');
+    };
+    window.addEventListener('testEvent', testEvent);
+    
+    // Émettre un événement de test
+    setTimeout(() => {
+      console.log('🎛️ Activities: Émission événement de test');
+      window.dispatchEvent(new CustomEvent('testEvent'));
+    }, 100);
+    
+    // Écouter les désinscriptions depuis l'agenda
+    const handleUnregister = (event) => {
+      console.log('🎧 Événement unregisterActivity reçu:', event);
+      console.log('🎧 Event detail:', event.detail);
+      
+      const { activityId } = event.detail;
+      console.log('📩 activityId extrait:', activityId);
+      
+      // Vérifier si l'utilisateur est connecté
+      const userId = localStorage.getItem('userId');
+      const currentIsLoggedIn = !!userId; // Utiliser seulement userId comme dans checkLoginAndLoadData
+      
+      console.log('📩 currentIsLoggedIn:', currentIsLoggedIn);
+      
+      if (activityId && currentIsLoggedIn && userId) {
+        console.log('✅ Conditions remplies, procédure de désinscription');
+        
+        // Récupérer les inscriptions actuelles
+        const userKey = `registeredActivities_${userId}`;
+        const currentRegistrations = JSON.parse(localStorage.getItem(userKey) || '[]');
+        console.log('📩 currentRegistrations:', currentRegistrations);
+        
+        // Supprimer l'inscription
+        const newRegistrations = currentRegistrations.filter(id => id !== activityId);
+        console.log('📩 newRegistrations:', newRegistrations);
+        
+        // Mettre à jour le localStorage
+        localStorage.setItem(userKey, JSON.stringify(newRegistrations));
+        
+        // Mettre à jour l'état avec une fonction de mise à jour
+        setRegisteredActivities(prevRegistrations => {
+          const updated = prevRegistrations.filter(id => id !== activityId);
+          console.log('🔄 Mise à jour état registeredActivities:', updated);
+          return updated;
+        });
+        
+        // Supprimer de l'agenda - utiliser le nouveau système
+        const userActivities = JSON.parse(localStorage.getItem('userActivities') || '{}');
+        if (userActivities[userId]?.agendaEvents) {
+          const updatedEvents = userActivities[userId].agendaEvents.filter(event => event.activityId !== activityId);
+          userActivities[userId].agendaEvents = updatedEvents;
+          localStorage.setItem('userActivities', JSON.stringify(userActivities));
+          console.log('📩 Événement supprimé du nouveau système agenda');
+        }
+        
+        // Déclencher la mise à jour de l'agenda
+        window.dispatchEvent(new CustomEvent('agendaUpdated'));
+        window.dispatchEvent(new CustomEvent('userActivitiesUpdated'));
+        
+        console.log('✅ Désinscription depuis agenda terminée');
+      } else {
+        console.log('❌ Conditions non remplies pour la désinscription');
+        console.log('   - activityId:', activityId);
+        console.log('   - currentIsLoggedIn:', currentIsLoggedIn);
+        console.log('   - userId:', userId);
+      }
+    };
+    
+    // Listener de test pour vérifier la communication
+    const handleTestFromAgenda = () => {
+      console.log('🧪 Activities: Événement de test reçu depuis Agenda !');
+    };
+    
+    console.log('🎛️ Activities: Installation des listeners d\'événements');
+    window.addEventListener('unregisterActivity', handleUnregister);
+    window.addEventListener('testFromAgenda', handleTestFromAgenda);
+    
+    return () => {
+      console.log('🎛️ Activities: Nettoyage des listeners');
+      window.removeEventListener('storage', checkLoginAndLoadData);
+      window.removeEventListener('userActivitiesUpdated', handleUserActivitiesUpdate);
+      window.removeEventListener('unregisterActivity', handleUnregister);
+      window.removeEventListener('testFromAgenda', handleTestFromAgenda);
+      window.removeEventListener('testEvent', testEvent);
+    };
+  }, []); // Pas de dépendances pour éviter les problèmes de fermeture
+
+  const saveUserRegistrations = (newRegistrations) => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      const userKey = `registeredActivities_${userId}`;
+      localStorage.setItem(userKey, JSON.stringify(newRegistrations));
+    }
+  };
+
+  const addEventToAgenda = (activity) => {
+    const newEvent = {
+      id: Date.now() + Math.random(),
+      title: activity.title,
+      description: `${activity.description}\n\nLieu: ${activity.location}`,
+      type: 'social',
+      date: activity.fullDate,
+      time: activity.startTime,
+      isActivity: true,
+      activityId: activity.id
+    };
+
+    // Utiliser le nouveau système de stockage utilisateur
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      const userActivities = JSON.parse(localStorage.getItem('userActivities') || '{}');
+      if (!userActivities[userId]) userActivities[userId] = {};
+      if (!userActivities[userId].agendaEvents) userActivities[userId].agendaEvents = [];
+      
+      userActivities[userId].agendaEvents.push(newEvent);
+      localStorage.setItem('userActivities', JSON.stringify(userActivities));
+      
+      console.log('✅ Événement ajouté au nouveau système:', newEvent);
+      console.log('✅ UserActivities après ajout:', userActivities);
+    }
+    
+    // Déclencher la mise à jour de l'agenda
+    window.dispatchEvent(new CustomEvent('agendaUpdated'));
+    window.dispatchEvent(new CustomEvent('userActivitiesUpdated'));
+    
+    console.log('✅ Événement ajouté à l\'agenda:', newEvent);
+    return newEvent;
+  };
+
+  const removeEventFromAgenda = (activityId) => {
+    // Utiliser le nouveau système de stockage utilisateur
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      const userActivities = JSON.parse(localStorage.getItem('userActivities') || '{}');
+      if (userActivities[userId]?.agendaEvents) {
+        const updatedEvents = userActivities[userId].agendaEvents.filter(event => event.activityId !== activityId);
+        userActivities[userId].agendaEvents = updatedEvents;
+        localStorage.setItem('userActivities', JSON.stringify(userActivities));
+        
+        console.log('❌ Événement retiré du nouveau système pour l\'activité:', activityId);
+        console.log('❌ UserActivities après suppression:', userActivities);
+      }
+    }
+    
+    // Déclencher la mise à jour de l'agenda
+    window.dispatchEvent(new CustomEvent('agendaUpdated'));
+    window.dispatchEvent(new CustomEvent('userActivitiesUpdated'));
+    
+    console.log('❌ Événement retiré de l\'agenda pour l\'activité:', activityId);
+  };
+
+  const unregisterFromActivity = (activityId) => {
+    console.log('🔄 unregisterFromActivity appelée avec:', activityId);
+    console.log('📋 Inscriptions actuelles:', registeredActivities);
+    
+    const newRegistrations = registeredActivities.filter(id => id !== activityId);
+    console.log('📋 Nouvelles inscriptions:', newRegistrations);
+    
+    setRegisteredActivities(newRegistrations);
+    saveUserRegistrations(newRegistrations);
+    removeEventFromAgenda(activityId);
+    
+    console.log('✅ Désinscription terminée');
+  };
+
   const handleRegisterClick = (activity) => {
+    if (!isLoggedIn) {
+      alert('Vous devez être connecté pour vous inscrire à une activité. Veuillez vous connecter d\'abord.');
+      return;
+    }
+    
     setSelectedActivity(activity);
     setShowConfirmModal(true);
   };
 
   const confirmRegistration = () => {
-    if (!selectedActivity) return;
+    if (!selectedActivity || !isLoggedIn) return;
 
-    console.log('Inscription à l\'activité:', selectedActivity.title);
+    try {
+      console.log('🎯 Inscription à l\'activité:', selectedActivity.title);
+      
+      // Ajouter l'inscription
+      const newRegistrations = [...registeredActivities, selectedActivity.id];
+      setRegisteredActivities(newRegistrations);
+      saveUserRegistrations(newRegistrations);
+      
+      // Ajouter à l'agenda
+      addEventToAgenda(selectedActivity);
 
-    // Ajouter l'activité aux inscriptions
-    const newRegisteredActivities = [...registeredActivities, selectedActivity.id];
-    setRegisteredActivities(newRegisteredActivities);
-    localStorage.setItem('registeredActivities', JSON.stringify(newRegisteredActivities));
-
-    // Ajouter l'événement à l'agenda
-    const existingEvents = JSON.parse(localStorage.getItem('agendaEvents') || '[]');
-    const newEvent = {
-      id: Date.now(),
-      title: selectedActivity.title,
-      description: `${selectedActivity.description}\n\nLieu: ${selectedActivity.location}`,
-      type: 'social',
-      date: selectedActivity.fullDate,
-      time: selectedActivity.startTime,
-      day: parseInt(selectedActivity.fullDate.split('-')[2]),
-      month: parseInt(selectedActivity.fullDate.split('-')[1]) - 1,
-      year: parseInt(selectedActivity.fullDate.split('-')[0]),
-      isActivity: true,
-      activityId: selectedActivity.id
-    };
-
-    const updatedEvents = [...existingEvents, newEvent];
-    localStorage.setItem('agendaEvents', JSON.stringify(updatedEvents));
-    
-    console.log('Événement ajouté à l\'agenda:', newEvent);
-    console.log('Tous les événements:', updatedEvents);
-
-    // Déclencher un événement personnalisé pour notifier l'agenda
-    window.dispatchEvent(new CustomEvent('agendaUpdated'));
-
-    setShowConfirmModal(false);
-    setSelectedActivity(null);
+      setShowConfirmModal(false);
+      setSelectedActivity(null);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
+      alert(error.message);
+    }
   };
 
   const isActivityRegistered = (activityId) => {
@@ -96,6 +333,13 @@ const ActivitiesPage = () => {
     <div className="activities-container">
       <div className="activities-card">
         <h1 className="activities-title">Activités à venir</h1>
+        
+        {!isLoggedIn && (
+          <div className="login-notice">
+            <p>⚠️ Vous devez être connecté pour vous inscrire aux activités.</p>
+            <p><a href="/login">Connectez-vous ici</a></p>
+          </div>
+        )}
         
         <div className="activities-grid">
           {activities.map((activity) => (
@@ -119,11 +363,12 @@ const ActivitiesPage = () => {
                 </div>
                 
                 <button 
-                  className={`register-button ${isActivityRegistered(activity.id) ? 'registered' : ''}`}
+                  className={`register-button ${isActivityRegistered(activity.id) ? 'registered' : ''} ${!isLoggedIn ? 'disabled' : ''}`}
                   onClick={() => handleRegisterClick(activity)}
-                  disabled={isActivityRegistered(activity.id)}
+                  disabled={!isLoggedIn || isActivityRegistered(activity.id)}
                 >
-                  {isActivityRegistered(activity.id) ? 'Inscrit ✓' : 'S\'inscrire'}
+                  {!isLoggedIn ? 'Connexion requise' : 
+                   isActivityRegistered(activity.id) ? 'Inscrit ✓' : 'S\'inscrire'}
                 </button>
               </div>
             </div>

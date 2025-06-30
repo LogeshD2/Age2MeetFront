@@ -176,7 +176,7 @@ const ProfileCards = () => {
           <div className="profiles-track">
             {extendedProfiles.map((profile, index) => (
               <ProfileCard key={`${profile.id}-${index}`} profile={profile} />
-            ))}
+          ))}
           </div>
         </div>
       </main>

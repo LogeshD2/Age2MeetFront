@@ -374,3 +374,41 @@ body {
   background: #3B82C7;
   border-color: #3B82C7;
 }
+
+/* Alerte de connexion */
+.login-notice {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.login-notice p {
+  margin: 5px 0;
+  color: #856404;
+}
+
+.login-notice a {
+  color: #4A90E2;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-notice a:hover {
+  text-decoration: underline;
+}
+
+/* Button désactivé */
+.register-button.disabled {
+  background: #ccc;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+.register-button.disabled:hover {
+  background: #ccc;
+  transform: none;
+}

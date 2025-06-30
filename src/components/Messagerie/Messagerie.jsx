@@ -109,6 +109,74 @@ const MessagerieSection = () => {
     }
   }, [selectedContact]);
 
+  // Rafraîchir les messages automatiquement toutes les 3 secondes pour la conversation active
+  useEffect(() => {
+    if (selectedContact) {
+      const interval = setInterval(() => {
+        loadMessages(selectedContact.id);
+      }, 3000); // 3 secondes
+      
+      return () => clearInterval(interval);
+    }
+  }, [selectedContact, currentUser]);
+
+  // Fonction pour rafraîchir les statuts des contacts
+  const refreshContactStatuses = async () => {
+    try {
+      console.log('🔄 Rafraîchissement des statuts...');
+      const contactsData = await contactService.getMyContacts();
+      
+      if (contactsData.accepted_contacts) {
+        // Mettre à jour les statuts des contacts existants
+        setContacts(prevContacts => 
+          prevContacts.map(contact => {
+            const updatedContact = contactsData.accepted_contacts.find(c => c.id === contact.id);
+            if (updatedContact) {
+              console.log(`📡 Statut de ${contact.name}: ${updatedContact.status}`);
+              return {
+                ...contact,
+                status: updatedContact.status || 'offline'
+              };
+            }
+            return contact;
+          })
+        );
+
+        // Mettre à jour le contact sélectionné aussi
+        setSelectedContact(prevSelected => {
+          if (prevSelected) {
+            const updatedSelected = contactsData.accepted_contacts.find(c => c.id === prevSelected.id);
+            if (updatedSelected) {
+              return {
+                ...prevSelected,
+                status: updatedSelected.status || 'offline'
+              };
+            }
+          }
+          return prevSelected;
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement des statuts:', error);
+    }
+  };
+
+  // Rafraîchir les statuts toutes les 2 minutes (plus raisonnable)
+  useEffect(() => {
+    const interval = setInterval(refreshContactStatuses, 120000); // 2 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  // Rafraîchir la liste des contacts toutes les 10 secondes pour les derniers messages
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 Rafraîchissement liste contacts...');
+      loadInitialData();
+    }, 10000); // 10 secondes
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const loadInitialData = async () => {
     setLoading(true);
     setError('');
@@ -118,10 +186,16 @@ const MessagerieSection = () => {
       const profileData = await profileService.getProfile();
       const currentUserId = profileData.user.id;
       
+      // Construire l'URL complète pour la photo de profil de l'utilisateur actuel
+      let currentUserAvatar = profileData.profile?.profile_picture;
+      if (currentUserAvatar && currentUserAvatar.startsWith('/media/')) {
+        currentUserAvatar = `http://localhost:8000${currentUserAvatar}`;
+      }
+      
       setCurrentUser({
         id: currentUserId,
         name: profileData.user.username || `${profileData.user.first_name} ${profileData.user.last_name}`,
-        avatar: profileData.profile_picture || profileData.user.first_name.charAt(0).toUpperCase()
+        avatar: currentUserAvatar || profileData.user.first_name.charAt(0).toUpperCase()
       });
       
       // Récupérer mes contacts
@@ -610,14 +684,14 @@ const MessagerieSection = () => {
                 )}
                 
                 <div className="message-input-container">
-                  <input
-                    type="text"
-                    value={newMessage}
+                <input
+                  type="text"
+                  value={newMessage}
                     onChange={handleInputChange}
                     placeholder="Écrivez votre message..."
-                    className="message-input"
+                  className="message-input"
                     disabled={sending}
-                  />
+                />
                   
                   <div className="message-actions">
                     <button 

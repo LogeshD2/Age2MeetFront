@@ -2,17 +2,68 @@ import React, { useState, useEffect } from 'react';
 import './Agenda.css';
 
 const Agenda = () => {
-  const [currentDate, setCurrentDate] = useState(() => {
-    // Démarrage au vrai lundi 7 juillet 2025 (le 6 juillet est un dimanche !)
-    const baseDate = new Date(2025, 6, 7); // 7 juillet 2025 (lundi)
-    console.log('📅 Date de base:', baseDate.toISOString().split('T')[0], baseDate.toLocaleDateString('fr-FR', { weekday: 'long' }));
-    return baseDate;
-  });
-  const [selectedDay, setSelectedDay] = useState(7); // Jour sélectionné
-  const [events, setEvents] = useState(() => {
-    const savedEvents = localStorage.getItem('agendaEvents');
-    return savedEvents ? JSON.parse(savedEvents) : [];
-  });
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Service centralisé pour gérer les inscriptions par utilisateur
+  const userActivityService = {
+    storageKey: 'userActivities',
+    
+    getCurrentUserId() {
+      return localStorage.getItem('userId');
+    },
+    
+    isUserLoggedIn() {
+      return !!this.getCurrentUserId();
+    },
+    
+    getAllUserData() {
+      const data = localStorage.getItem(this.storageKey);
+      return data ? JSON.parse(data) : {};
+    },
+    
+    getCurrentUserEvents() {
+      if (!this.isUserLoggedIn()) return [];
+      const userId = this.getCurrentUserId();
+      const allData = this.getAllUserData();
+      return allData[userId]?.agendaEvents || [];
+    },
+    
+    getCurrentUserRegistrations() {
+      if (!this.isUserLoggedIn()) return [];
+      const userId = this.getCurrentUserId();
+      const allData = this.getAllUserData();
+      return allData[userId]?.registeredActivities || [];
+    },
+    
+    saveUserData(userId, registeredActivities, agendaEvents) {
+      const allData = this.getAllUserData();
+      if (!allData[userId]) allData[userId] = {};
+      allData[userId].registeredActivities = registeredActivities;
+      allData[userId].agendaEvents = agendaEvents;
+      localStorage.setItem(this.storageKey, JSON.stringify(allData));
+      
+      // Déclencher les événements de mise à jour
+      window.dispatchEvent(new CustomEvent('userActivitiesUpdated'));
+    },
+    
+    unregisterFromActivity(activityId) {
+      if (!this.isUserLoggedIn()) return false;
+      
+      const userId = this.getCurrentUserId();
+      const currentRegistrations = this.getCurrentUserRegistrations();
+      const currentEvents = this.getCurrentUserEvents();
+      
+      const newRegistrations = currentRegistrations.filter(id => id !== activityId);
+      const newEvents = currentEvents.filter(event => event.activityId !== activityId);
+      
+      this.saveUserData(userId, newRegistrations, newEvents);
+      return true;
+    }
+  };
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [eventForm, setEventForm] = useState({
@@ -21,19 +72,79 @@ const Agenda = () => {
     type: 'personnel'
   });
 
-  // Écouter les changements dans localStorage pour mettre à jour les événements
+  // Vérifier l'état de connexion et charger les données utilisateur
   useEffect(() => {
+    console.log('🔄 AGENDA: useEffect principal - chargement des événements');
+    
+    const userId = userActivityService.getCurrentUserId();
+    const loggedIn = userActivityService.isUserLoggedIn();
+    
+    console.log('🔄 UserId:', userId);
+    console.log('🔄 LoggedIn:', loggedIn);
+    
+    setCurrentUserId(userId);
+    setIsLoggedIn(loggedIn);
+    
+    if (loggedIn) {
+      let userEvents = userActivityService.getCurrentUserEvents();
+      console.log('🔄 Événements utilisateur chargés depuis userActivityService:', userEvents);
+      
+      // Migrer les anciennes données si nécessaire
+      const oldEvents = localStorage.getItem('agendaEvents');
+      if (oldEvents) {
+        const oldEventsArray = JSON.parse(oldEvents);
+        console.log('🔄 Migration: Anciens événements trouvés:', oldEventsArray);
+        
+        const currentRegistrations = userActivityService.getCurrentUserRegistrations();
+        console.log('🔄 Migration: Inscriptions actuelles:', currentRegistrations);
+        
+        // Combiner les événements (éviter les doublons)
+        const combinedEvents = [...userEvents];
+        oldEventsArray.forEach(oldEvent => {
+          const eventExists = combinedEvents.some(e => 
+            e.activityId === oldEvent.activityId || 
+            (e.date === oldEvent.date && e.title === oldEvent.title)
+          );
+          if (!eventExists) {
+            combinedEvents.push(oldEvent);
+          }
+        });
+        
+        userActivityService.saveUserData(userId, currentRegistrations, combinedEvents);
+        localStorage.removeItem('agendaEvents');
+        userEvents = combinedEvents; // Utiliser les événements combinés
+        console.log('🔄 Migration terminée - événements combinés:', combinedEvents);
+      }
+      
+      console.log('🔄 Événements FINAUX à définir dans le state:', userEvents);
+      setEvents(userEvents);
+    } else {
+      setEvents([]);
+    }
+    
+    // Écouter les changements de connexion
     const handleStorageChange = () => {
-      const savedEvents = localStorage.getItem('agendaEvents');
-      if (savedEvents) {
-        console.log('Mise à jour des événements depuis localStorage:', savedEvents);
-        setEvents(JSON.parse(savedEvents));
+      const newUserId = userActivityService.getCurrentUserId();
+      const newLoggedIn = userActivityService.isUserLoggedIn();
+      
+      setCurrentUserId(newUserId);
+      setIsLoggedIn(newLoggedIn);
+      
+      if (newLoggedIn) {
+        const userEvents = userActivityService.getCurrentUserEvents();
+        setEvents(userEvents);
+      } else {
+        setEvents([]);
       }
     };
-
+    
     const handleAgendaUpdate = () => {
       console.log('Événement agendaUpdated reçu');
-      handleStorageChange();
+      if (userActivityService.isUserLoggedIn()) {
+        const userEvents = userActivityService.getCurrentUserEvents();
+        setEvents(userEvents);
+        console.log('Événements mis à jour:', userEvents);
+      }
     };
 
     // Écouter les changements de localStorage depuis d'autres onglets/pages
@@ -41,54 +152,17 @@ const Agenda = () => {
     
     // Écouter l'événement personnalisé pour les mises à jour de l'agenda
     window.addEventListener('agendaUpdated', handleAgendaUpdate);
+    window.addEventListener('userActivitiesUpdated', handleAgendaUpdate);
     
-    // Vérifier les changements périodiquement (pour les changements dans le même onglet)
-    const interval = setInterval(() => {
-      const savedEvents = localStorage.getItem('agendaEvents');
-      const currentEventsStr = JSON.stringify(events);
-      const savedEventsStr = savedEvents || '[]';
-      
-      if (currentEventsStr !== savedEventsStr) {
-        console.log('Changement détecté dans localStorage');
-        setEvents(JSON.parse(savedEventsStr));
-      }
-    }, 1000);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('agendaUpdated', handleAgendaUpdate);
-      clearInterval(interval);
+      window.removeEventListener('userActivitiesUpdated', handleAgendaUpdate);
     };
-  }, [events]);
-
-  // Forcer le rechargement des événements au montage du composant
-  useEffect(() => {
-    console.log('Agenda monté - rechargement des événements');
-    const savedEvents = localStorage.getItem('agendaEvents');
-    if (savedEvents) {
-      console.log('Événements trouvés:', savedEvents);
-      setEvents(JSON.parse(savedEvents));
-    } else {
-      console.log('Aucun événement trouvé dans localStorage');
-    }
   }, []);
 
-  // Générer les jours de la semaine
-  const generateWeekDays = (startDate) => {
-    console.log('🔧 generateWeekDays - startDate:', startDate.toISOString().split('T')[0], startDate.toLocaleDateString('fr-FR', { weekday: 'long' }));
-    const days = [];
-    for (let i = 0; i < 6; i++) {
-      const day = new Date(startDate);
-      day.setDate(startDate.getDate() + i);
-      console.log(`🔧 Jour ${i}:`, day.toISOString().split('T')[0], day.toLocaleDateString('fr-FR', { weekday: 'long' }));
-      days.push(day);
-    }
-    console.log('🔧 generateWeekDays - résultat final:', days.map(d => d.toISOString().split('T')[0]));
-    return days;
-  };
-
-  // Générer le calendrier du mois
-  const generateCalendarDays = (date) => {
+  // Générer le calendrier du mois pour le mini-calendrier
+  const generateMiniCalendarDays = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     
@@ -117,74 +191,67 @@ const Agenda = () => {
     return calendarDays;
   };
 
-  const weekDays = generateWeekDays(currentDate);
-  const dayNames = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
-  const calendarDays = generateCalendarDays(currentDate);
+  // Générer le calendrier principal du mois
+  const generateMainCalendarDays = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    // Premier jour du mois
+    const firstDay = new Date(year, month, 1);
+    // Dernier jour du mois
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Jour de la semaine du premier jour (0=dimanche, 1=lundi, etc.)
+    let startDay = firstDay.getDay();
+    // Convertir pour que lundi = 0
+    startDay = startDay === 0 ? 6 : startDay - 1;
+    
+    // Nombre de jours dans le mois
+    const daysInMonth = lastDay.getDate();
+    
+    const calendarDays = [];
+    
+    // Ajouter les jours du mois précédent
+    const prevMonth = new Date(year, month - 1, 0);
+    const prevMonthDays = prevMonth.getDate();
+    
+    for (let i = startDay - 1; i >= 0; i--) {
+      calendarDays.push({
+        day: prevMonthDays - i,
+        isCurrentMonth: false,
+        isPrevMonth: true,
+        date: new Date(year, month - 1, prevMonthDays - i)
+      });
+    }
+    
+    // Ajouter tous les jours du mois actuel
+    for (let day = 1; day <= daysInMonth; day++) {
+      calendarDays.push({
+        day: day,
+        isCurrentMonth: true,
+        isPrevMonth: false,
+        date: new Date(year, month, day)
+      });
+    }
+    
+    // Ajouter les jours du mois suivant pour compléter la grille
+    const remainingSlots = 42 - calendarDays.length; // 6 semaines * 7 jours
+    for (let day = 1; day <= remainingSlots; day++) {
+      calendarDays.push({
+        day: day,
+        isCurrentMonth: false,
+        isPrevMonth: false,
+        date: new Date(year, month + 1, day)
+      });
+    }
+    
+    return calendarDays;
+  };
+
+  const miniCalendarDays = generateMiniCalendarDays(currentDate);
+  const mainCalendarDays = generateMainCalendarDays(currentDate);
   const currentMonth = currentDate.toLocaleDateString('fr-FR', { month: 'long' });
   const currentYear = currentDate.getFullYear();
-
-  // Debug pour voir les jours générés avec alignment
-  console.log('🗓️ Debug alignment des jours:');
-  console.log('CurrentDate:', currentDate.toISOString().split('T')[0], 'Jour de la semaine:', currentDate.toLocaleDateString('fr-FR', { weekday: 'long' }));
-  console.log('WeekDays générés:', weekDays.map((day, index) => ({ 
-    index,
-    dayName: dayNames[index],
-    date: day.toISOString().split('T')[0], 
-    dayOfWeek: day.toLocaleDateString('fr-FR', { weekday: 'long' }),
-    dayNumber: day.getDate(),
-    match: dayNames[index].toLowerCase() === day.toLocaleDateString('fr-FR', { weekday: 'long' }).toLowerCase()
-  })));
-  
-  // Debug détaillé de l'alignement header vs contenu
-  console.log('🔍 Alignement Header vs Contenu:');
-  weekDays.forEach((day, index) => {
-    console.log(`Index ${index}: Header="${dayNames[index]} ${day.getDate()}" | Jour réel="${day.toLocaleDateString('fr-FR', { weekday: 'long' })} ${day.getDate()}" | Match=${dayNames[index].toLowerCase() === day.toLocaleDateString('fr-FR', { weekday: 'long' }).toLowerCase()}`);
-  });
-  
-  // Vérifier l'événement de test
-  const testEvent = events.find(e => e.isActivity);
-  if (testEvent) {
-    console.log('🎯 Événement test trouvé:', {
-      title: testEvent.title,
-      date: testEvent.date,
-      time: testEvent.time,
-      expectedDay: new Date(testEvent.date).toLocaleDateString('fr-FR', { weekday: 'long' }),
-      expectedDayNumber: new Date(testEvent.date).getDate()
-    });
-    
-    // Vérifier dans quelle colonne il devrait apparaître
-    const eventDate = new Date(testEvent.date);
-    weekDays.forEach((weekDay, index) => {
-      const isSameDay = weekDay.toISOString().split('T')[0] === testEvent.date;
-      console.log(`Colonne ${index} (${dayNames[index]}): ${weekDay.getDate()} juillet - Match: ${isSameDay}`);
-    });
-  }
-
-  // Générer les créneaux horaires
-  const timeSlots = [];
-  for (let hour = 8; hour <= 23; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-  }
-
-  const formatDate = (date) => {
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const formatWeekRange = (startDate) => {
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 5);
-    
-    const start = startDate.toLocaleDateString('fr-FR', { day: '2-digit' });
-    const end = endDate.toLocaleDateString('fr-FR', { day: '2-digit' });
-    const month = startDate.toLocaleDateString('fr-FR', { month: 'long' });
-    const year = startDate.getFullYear();
-    
-    return `${start}-${end} ${month} ${year}`;
-  };
 
   const navigateMonth = (direction) => {
     const newDate = new Date(currentDate);
@@ -196,116 +263,243 @@ const Agenda = () => {
     if (day) {
       setSelectedDay(day);
       const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      
-      // Trouver le lundi de cette semaine pour mettre à jour la vue hebdomadaire
-      const dayOfWeek = newDate.getDay(); // 0 = dimanche, 1 = lundi, etc.
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Si dimanche, reculer de 6 jours
-      const monday = new Date(newDate);
-      monday.setDate(newDate.getDate() + mondayOffset);
-      
-      setCurrentDate(monday);
+      setCurrentDate(newDate);
     }
   };
 
-  const handleCellClick = (day, timeSlot) => {
-    setSelectedSlot({ day, timeSlot });
-    setShowEventModal(true);
-    setEventForm({ title: '', description: '', type: 'personnel' });
+  const handleDayClick = (dayObj) => {
+    console.log('📅 === DIAGNOSTIC CLIC JOUR ===');
+    console.log('📅 dayObj complet:', dayObj);
+    console.log('📅 dayObj.date:', dayObj.date);
+    console.log('📅 dayObj.date toString:', dayObj.date.toString());
+    console.log('📅 dayObj.date toISOString:', dayObj.date.toISOString());
+    console.log('📅 dayObj.date toLocaleDateString:', dayObj.date.toLocaleDateString());
+    console.log('📅 Est du mois actuel:', dayObj.isCurrentMonth);
+    
+    if (!dayObj.isCurrentMonth) {
+      // Si on clique sur un jour d'un autre mois, naviguer vers ce mois
+      console.log('📅 Navigation vers autre mois');
+      const newDate = new Date(dayObj.date);
+      setCurrentDate(new Date(newDate.getFullYear(), newDate.getMonth(), 1));
+      setSelectedDay(dayObj.day);
+    } else {
+      // Ouvrir le modal pour ajouter un événement
+      console.log('📅 Ouverture modal pour ajouter événement');
+      console.log('📅 Date sélectionnée (avant conversion):', dayObj.date);
+      
+      // Test de différentes méthodes de conversion de date
+      const method1 = dayObj.date.toISOString().split('T')[0];
+      const method2 = `${dayObj.date.getFullYear()}-${String(dayObj.date.getMonth() + 1).padStart(2, '0')}-${String(dayObj.date.getDate()).padStart(2, '0')}`;
+      
+      console.log('📅 Méthode 1 (toISOString):', method1);
+      console.log('📅 Méthode 2 (getFullYear/getMonth/getDate):', method2);
+      
+      const selectedSlotData = {
+        day: dayObj.date,
+        timeSlot: '09:00' // Heure par défaut
+      };
+      console.log('📅 selectedSlot créé:', selectedSlotData);
+      
+      setSelectedSlot(selectedSlotData);
+      setShowEventModal(true);
+      
+      console.log('📅 === FIN DIAGNOSTIC ===');
+    }
   };
 
   const handleEventSubmit = (e) => {
     e.preventDefault();
-    if (!eventForm.title.trim()) return;
-
+    
+    console.log('📝 === DIAGNOSTIC CRÉATION ÉVÉNEMENT ===');
+    console.log('📝 Titre:', eventForm.title);
+    console.log('📝 selectedSlot complet:', selectedSlot);
+    console.log('📝 selectedSlot.day:', selectedSlot.day);
+    console.log('📝 selectedSlot.day toString:', selectedSlot.day.toString());
+    console.log('📝 selectedSlot.day toISOString:', selectedSlot.day.toISOString());
+    
+    if (!eventForm.title.trim()) {
+      console.log('❌ Titre vide, abandon');
+      return;
+    }
+    
+    // Test de différentes méthodes de conversion de date
+    const dateMethod1 = selectedSlot.day.toISOString().split('T')[0];
+    const dateMethod2 = `${selectedSlot.day.getFullYear()}-${String(selectedSlot.day.getMonth() + 1).padStart(2, '0')}-${String(selectedSlot.day.getDate()).padStart(2, '0')}`;
+    
+    console.log('📝 Date méthode 1 (toISOString):', dateMethod1);
+    console.log('📝 Date méthode 2 (getFullYear/etc):', dateMethod2);
+    
     const newEvent = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       title: eventForm.title,
       description: eventForm.description,
       type: eventForm.type,
-      date: selectedSlot.day.toISOString().split('T')[0],
+      date: dateMethod2, // UTILISER LA MÉTHODE 2 pour éviter les problèmes de fuseau horaire
       time: selectedSlot.timeSlot,
-      day: selectedSlot.day.getDate(),
-      month: selectedSlot.day.getMonth(),
-      year: selectedSlot.day.getFullYear()
+      isActivity: false
     };
-
-    const updatedEvents = [...events, newEvent];
-    setEvents(updatedEvents);
-    localStorage.setItem('agendaEvents', JSON.stringify(updatedEvents));
     
-    setShowEventModal(false);
-    setSelectedSlot(null);
-    setEventForm({ title: '', description: '', type: 'personnel' });
-  };
-
-  const getEventsForDayAndTime = (day, timeSlot) => {
-    const dayString = day.toISOString().split('T')[0];
+    console.log('📝 Nouvel événement créé:', newEvent);
+    console.log('📝 Date finale de l\'événement:', newEvent.date);
     
-    // Extraire l'heure du créneau (ex: "14:00" -> 14)
-    const slotHour = parseInt(timeSlot.split(':')[0]);
-    
-    const filtered = events.filter(event => {
-      if (event.date !== dayString) return false;
+    if (userActivityService.isUserLoggedIn()) {
+      const userId = userActivityService.getCurrentUserId();
+      const currentRegistrations = userActivityService.getCurrentUserRegistrations();
+      const updatedEvents = [...events, newEvent];
       
-      // Extraire l'heure de l'événement (ex: "14:30" -> 14)
-      const eventHour = parseInt(event.time.split(':')[0]);
+      console.log('📝 Utilisateur connecté, sauvegarde avec userActivityService');
+      console.log('📝 Events avant ajout:', events.length);
+      console.log('📝 Events après ajout:', updatedEvents.length);
       
-      // L'événement appartient à ce créneau s'il commence dans cette heure
-      return eventHour === slotHour;
-    });
-    
-    // Debug étendu pour comprendre le problème
-    console.log(`🔍 Recherche événements pour ${dayString} à ${timeSlot} (heure ${slotHour})`);
-    console.log(`📅 Jour recherché: ${dayString}`);
-    console.log(`⏰ Heure recherchée: ${timeSlot} (heure: ${slotHour})`);
-    console.log(`📋 Tous les événements disponibles:`, events.map(e => ({
-      title: e.title,
-      date: e.date,
-      time: e.time,
-      eventHour: e.time ? parseInt(e.time.split(':')[0]) : null,
-      isActivity: e.isActivity
-    })));
-    console.log(`✅ Événements filtrés:`, filtered);
-    
-    if (filtered.length > 0) {
-      console.log(`✨ Événement trouvé pour ${dayString} à ${timeSlot}:`, filtered);
+      // Sauvegarder dans le nouveau système
+      userActivityService.saveUserData(userId, currentRegistrations, updatedEvents);
+      setEvents(updatedEvents);
+      
+      console.log('✅ Événement sauvegardé dans userActivities');
     } else {
-      console.log(`❌ Aucun événement trouvé pour ${dayString} à ${timeSlot}`);
-      // Vérifier s'il y a des événements pour cette date mais à d'autres heures
-      const eventsForDay = events.filter(event => event.date === dayString);
-      if (eventsForDay.length > 0) {
-        console.log(`⚠️ Événements trouvés pour ${dayString} mais à d'autres heures:`, eventsForDay.map(e => ({
-          title: e.title,
-          time: e.time,
-          hour: e.time ? parseInt(e.time.split(':')[0]) : null
-        })));
-      }
+      console.log('📝 Utilisateur non connecté, sauvegarde en fallback');
+      // Fallback pour les utilisateurs non connectés
+      const updatedEvents = [...events, newEvent];
+      setEvents(updatedEvents);
+      localStorage.setItem('agendaEvents', JSON.stringify(updatedEvents));
+      console.log('✅ Événement sauvegardé dans agendaEvents');
     }
     
-    return filtered;
+    // Reset form
+    setEventForm({ title: '', description: '', type: 'personnel' });
+    setShowEventModal(false);
+    setSelectedSlot(null);
+    
+    console.log('📝 Formulaire reset et modal fermé');
+    console.log('📝 État events final:', events.length + 1); // +1 car setEvents est asynchrone
+  };
+
+  const getEventsForDay = (date) => {
+    // Utiliser une méthode qui ignore les fuseaux horaires
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    // DEBUGGING: Afficher les détails de la recherche
+    if (dateStr === '2025-06-30' || dateStr === '2025-05-31') { // Dates importantes pour debug
+      console.log('🔍 RECHERCHE DÉTAILLÉE pour:', dateStr);
+      console.log('🔍 Tous les événements disponibles:', events);
+      console.log('🔍 Recherche avec dateStr:', dateStr);
+      
+      events.forEach((event, index) => {
+        console.log(`🔍 Événement ${index + 1}:`, {
+          titre: event.title,
+          date: event.date,
+          dateType: typeof event.date,
+          correspond: event.date === dateStr
+        });
+      });
+    }
+    
+    const foundEvents = events.filter(event => event.date === dateStr);
+    
+    if (dateStr === '2025-06-30' || dateStr === '2025-05-31') {
+      console.log('🎯 Événements trouvés pour', dateStr, ':', foundEvents);
+    }
+    
+    return foundEvents;
   };
 
   const deleteEvent = (eventId) => {
-    const eventToDelete = events.find(event => event.id === eventId);
+    const eventToDelete = events.find(e => e.id === eventId);
+    console.log('🗑️ Suppression événement:', eventToDelete);
     
-    // Si c'est une activité, la retirer aussi des inscriptions
-    if (eventToDelete && eventToDelete.isActivity) {
-      const registeredActivities = JSON.parse(localStorage.getItem('registeredActivities') || '[]');
-      const updatedRegistered = registeredActivities.filter(id => id !== eventToDelete.activityId);
-      localStorage.setItem('registeredActivities', JSON.stringify(updatedRegistered));
+    if (eventToDelete?.isActivity) {
+      // Si c'est une activité Age2meet, déclencher la désinscription
+      console.log('🗑️ Suppression activité depuis agenda:', eventToDelete.activityId);
+      console.log('🗑️ Événement à supprimer:', eventToDelete);
+      
+      // NOUVEAU: Supprimer directement l'inscription du localStorage
+      const userId = userActivityService.getCurrentUserId();
+      if (userId) {
+        // Supprimer de l'ancien système registeredActivities_${userId}
+        const userKey = `registeredActivities_${userId}`;
+        const currentRegistrations = JSON.parse(localStorage.getItem(userKey) || '[]');
+        const newRegistrations = currentRegistrations.filter(id => id !== eventToDelete.activityId);
+        localStorage.setItem(userKey, JSON.stringify(newRegistrations));
+        console.log('🗑️ Inscription supprimée directement du localStorage');
+        console.log('🗑️ Anciennes inscriptions:', currentRegistrations);
+        console.log('🗑️ Nouvelles inscriptions:', newRegistrations);
+        
+        // Supprimer également du nouveau système userActivities
+        const userActivities = userActivityService.getAllUserData();
+        if (userActivities[userId]?.registeredActivities) {
+          userActivities[userId].registeredActivities = userActivities[userId].registeredActivities.filter(id => id !== eventToDelete.activityId);
+          localStorage.setItem('userActivities', JSON.stringify(userActivities));
+          console.log('🗑️ Inscription supprimée du système userActivities');
+        }
+      }
+      
+      // Déclencher l'événement de désinscription avec l'ID de l'activité
+      console.log('📡 Émission événement unregisterActivity avec activityId:', eventToDelete.activityId);
+      
+      const customEvent = new CustomEvent('unregisterActivity', {
+        detail: { activityId: eventToDelete.activityId }
+      });
+      
+      console.log('📡 Événement créé:', customEvent);
+      console.log('📡 Detail de l\'événement:', customEvent.detail);
+      
+      window.dispatchEvent(customEvent);
+      
+      console.log('📡 Événement unregisterActivity émis');
+      
+      // Test: émettre également un événement simple pour vérifier le système
+      console.log('🧪 Test: émission événement simple');
+      window.dispatchEvent(new CustomEvent('testFromAgenda'));
+    } else {
+      // C'est un événement personnel
+      console.log('🗑️ Suppression événement personnel:', eventToDelete.title);
     }
     
     const updatedEvents = events.filter(event => event.id !== eventId);
+    console.log('🗑️ Events avant suppression:', events.length);
+    console.log('🗑️ Events après suppression:', updatedEvents.length);
+    
     setEvents(updatedEvents);
-    localStorage.setItem('agendaEvents', JSON.stringify(updatedEvents));
+    
+    // Mettre à jour également le système userActivities
+    if (userActivityService.isUserLoggedIn()) {
+      const userId = userActivityService.getCurrentUserId();
+      const currentRegistrations = userActivityService.getCurrentUserRegistrations();
+      userActivityService.saveUserData(userId, currentRegistrations, updatedEvents);
+      console.log('🗑️ Événement supprimé du système userActivities');
+    } else {
+      // Fallback pour utilisateurs non connectés
+      localStorage.setItem('agendaEvents', JSON.stringify(updatedEvents));
+      console.log('🗑️ Événement supprimé de agendaEvents (fallback)');
+    }
   };
 
   const getUpcomingEvents = () => {
     const today = new Date();
-    return events
-      .filter(event => new Date(event.date) >= today)
+    console.log('📋 Calcul événements à venir');
+    console.log('📋 Date aujourd\'hui:', today);
+    console.log('📋 Tous les événements:', events);
+    
+    const upcomingEvents = events
+      .filter(event => {
+        const eventDate = new Date(event.date);
+        const isUpcoming = eventDate >= today;
+        console.log(`📋 Événement "${event.title}" (${event.date}): ${isUpcoming ? 'à venir' : 'passé'}`);
+        return isUpcoming;
+      })
       .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(0, 5); // Augmenter pour montrer plus d'événements
+      .slice(0, 5);
+    
+    console.log('📋 Événements à venir filtrés:', upcomingEvents);
+    return upcomingEvents;
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
   };
 
   return (
@@ -336,7 +530,7 @@ const Agenda = () => {
                   <span>Sa</span>
                 </div>
                 <div className="mini-calendar-body">
-                  {calendarDays.map((day, index) => (
+                  {miniCalendarDays.map((day, index) => (
                     <span 
                       key={index} 
                       className={day === currentDate.getDate() ? 'current-day' : ''}
@@ -384,68 +578,64 @@ const Agenda = () => {
 
           <div className="agenda-main">
             <div className="agenda-controls">
-              <div className="week-range">
-                <span className="week-text">{formatWeekRange(currentDate)}</span>
-                <select className="week-dropdown">
-                  <option>Semaine</option>
-                </select>
+              <div className="month-range">
+                <span className="month-text">{currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)} {currentYear}</span>
               </div>
             </div>
 
-            <div className="calendar-grid">
-              <div className="calendar-header">
-                <div className="time-column-header"></div>
-                {weekDays.map((day, index) => (
-                  <div key={index} className="day-header">
-                    <div className="day-name">{day.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()}</div>
-                    <div className="day-number">{day.getDate()}</div>
-                  </div>
-                ))}
+            <div className="main-calendar">
+              <div className="main-calendar-header">
+                <div className="main-day-name">Lundi</div>
+                <div className="main-day-name">Mardi</div>
+                <div className="main-day-name">Mercredi</div>
+                <div className="main-day-name">Jeudi</div>
+                <div className="main-day-name">Vendredi</div>
+                <div className="main-day-name">Samedi</div>
+                <div className="main-day-name">Dimanche</div>
               </div>
 
-              <div className="calendar-body">
-                {timeSlots.map((timeSlot, timeIndex) => (
-                  <div key={timeIndex} className="time-row">
-                    <div className="time-label">{timeSlot}</div>
-                    {weekDays.map((day, dayIndex) => {
-                      const dayEvents = getEventsForDayAndTime(day, timeSlot);
-                      return (
-                        <div 
-                          key={dayIndex} 
-                          className="time-cell"
-                          onClick={() => handleCellClick(day, timeSlot)}
-                          title="Cliquez pour ajouter un événement"
-                        >
-                          {dayEvents.map(event => (
-                            <div 
-                              key={event.id} 
-                              className={`event-block event-${event.type} ${event.isActivity ? 'activity-event' : ''}`}
-                              onClick={(e) => e.stopPropagation()}
-                              title={event.isActivity ? 'Activité Age2meet' : 'Événement personnel'}
-                            >
-                              <div className="event-title-small">
-                                {event.isActivity ? '🎯 ' : ''}{event.title}
-                              </div>
-                              <div className="event-exact-time">
-                                {event.time}
-                              </div>
-                              <button 
-                                className="delete-event-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteEvent(event.id);
-                                }}
-                                title={event.isActivity ? "Se désinscrire de l'activité" : "Supprimer l'événement"}
-                              >
-                                ×
-                              </button>
+              <div className="main-calendar-body">
+                {mainCalendarDays.map((dayObj, index) => {
+                  const dayEvents = getEventsForDay(dayObj.date);
+                  return (
+                    <div 
+                      key={index} 
+                      className={`main-calendar-day ${!dayObj.isCurrentMonth ? 'other-month' : ''} ${isToday(dayObj.date) ? 'today' : ''}`}
+                      onClick={() => handleDayClick(dayObj)}
+                    >
+                      <div className="day-number-main">{dayObj.day}</div>
+                      <div className="day-events">
+                        {dayEvents.slice(0, 3).map(event => (
+                          <div 
+                            key={event.id} 
+                            className={`event-item event-${event.type} ${event.isActivity ? 'activity-event' : ''}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="event-title-mini">
+                              {event.isActivity ? '🎯 ' : ''}{event.title}
                             </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                            <div className="event-time-mini">{event.time}</div>
+                            <button 
+                              className="delete-event-mini"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteEvent(event.id);
+                              }}
+                              title={event.isActivity ? "Se désinscrire de l'activité" : "Supprimer l'événement"}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <div className="more-events">
+                            +{dayEvents.length - 3} autre{dayEvents.length - 3 > 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -468,19 +658,27 @@ const Agenda = () => {
             
             <form onSubmit={handleEventSubmit} className="event-form">
               <div className="form-group">
-                <label>Date et heure</label>
+                <label>Date</label>
                 <div className="datetime-display">
                   {selectedSlot && (
-                    <>
-                      {selectedSlot.day.toLocaleDateString('fr-FR', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })} à {selectedSlot.timeSlot}
-                    </>
+                    selectedSlot.day.toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })
                   )}
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="event-time">Heure</label>
+                <input
+                  type="time"
+                  id="event-time"
+                  value={selectedSlot?.timeSlot || '09:00'}
+                  onChange={(e) => setSelectedSlot({...selectedSlot, timeSlot: e.target.value})}
+                />
               </div>
 
               <div className="form-group">
@@ -544,4 +742,4 @@ const Agenda = () => {
   );
 };
 
-export default Agenda; 
+export default Agenda;

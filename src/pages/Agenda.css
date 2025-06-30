@@ -174,26 +174,7 @@
   align-items: center;
 }
 
-.week-range {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.week-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
-
-.week-dropdown {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: white;
-  font-size: 14px;
-  cursor: pointer;
-}
+/* Anciens styles hebdomadaires supprimés - remplacés par le calendrier mensuel */
 
 .calendar-grid {
   flex: 1;
@@ -646,4 +627,253 @@
 .btn-create-event:hover {
   background: #3B82C7;
   border-color: #3B82C7;
+}
+
+/* Nouveau calendrier principal mensuel */
+.main-calendar {
+  flex: 1;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.main-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.main-day-name {
+  padding: 15px 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  border-right: 1px solid #e0e0e0;
+}
+
+.main-day-name:last-child {
+  border-right: none;
+}
+
+.main-calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  height: 480px;
+}
+
+.main-calendar-day {
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 80px;
+  overflow: hidden;
+}
+
+.main-calendar-day:hover {
+  background-color: #f8f9fa;
+}
+
+.main-calendar-day.today {
+  background-color: #e3f2fd;
+}
+
+.main-calendar-day.other-month {
+  background-color: #fafafa;
+  color: #999;
+}
+
+.main-calendar-day.other-month:hover {
+  background-color: #f0f0f0;
+}
+
+.main-calendar-day:nth-child(7n) {
+  border-right: none;
+}
+
+.day-number-main {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.main-calendar-day.other-month .day-number-main {
+  color: #999;
+}
+
+.main-calendar-day.today .day-number-main {
+  color: #4A90E2;
+  font-weight: bold;
+}
+
+.day-events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.event-item {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.event-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.event-title-mini {
+  font-weight: 500;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-time-mini {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.delete-event-mini {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.event-item:hover .delete-event-mini {
+  display: flex;
+}
+
+.delete-event-mini:hover {
+  background: #cc0000;
+}
+
+.more-events {
+  font-size: 10px;
+  color: #666;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* Styles pour les différents types d'événements dans le calendrier principal */
+.event-item.event-personnel {
+  background: #e3f2fd;
+  border-left: 3px solid #2196f3;
+  color: #1976d2;
+}
+
+.event-item.event-travail {
+  background: #fff3e0;
+  border-left: 3px solid #ff9800;
+  color: #f57c00;
+}
+
+.event-item.event-medical {
+  background: #ffebee;
+  border-left: 3px solid #f44336;
+  color: #d32f2f;
+}
+
+.event-item.event-social {
+  background: #e8f5e8;
+  border-left: 3px solid #4caf50;
+  color: #388e3c;
+}
+
+.event-item.event-loisir {
+  background: #f3e5f5;
+  border-left: 3px solid #9c27b0;
+  color: #7b1fa2;
+}
+
+.event-item.activity-event {
+  background: linear-gradient(135deg, #4A90E2, #357abd);
+  border-left: 3px solid #2c5282;
+  color: white;
+  font-weight: 600;
+}
+
+.event-item.activity-event .event-title-mini {
+  color: white;
+}
+
+.event-item.activity-event .event-time-mini {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Mise à jour des contrôles pour le calendrier mensuel */
+.month-range {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.month-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Responsive pour le nouveau calendrier */
+@media (max-width: 768px) {
+  .main-calendar-body {
+    height: 400px;
+  }
+  
+  .main-calendar-day {
+    min-height: 60px;
+    padding: 4px;
+  }
+  
+  .day-number-main {
+    font-size: 14px;
+  }
+  
+  .event-item {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+  
+  .event-title-mini {
+    font-size: 9px;
+  }
+  
+  .event-time-mini {
+    font-size: 8px;
+  }
+  
+  .main-day-name {
+    padding: 10px 4px;
+    font-size: 12px;
+  }
 } 

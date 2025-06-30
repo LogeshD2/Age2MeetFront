@@ -13,8 +13,10 @@ export default function ContactSection() {
   // États pour les vraies données
   const [contacts, setContacts] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]); // NOUVEAU: Demandes envoyées
   const [allUsers, setAllUsers] = useState([]);
   const [persistentUsers, setPersistentUsers] = useState([]); // Liste persistante des utilisateurs
+  const [highlightedUserId, setHighlightedUserId] = useState(null); // NOUVEAU: Pour mettre en évidence une personne
   
   const navigate = useNavigate();
 
@@ -93,6 +95,18 @@ export default function ContactSection() {
       }
     }
     
+    // Charger les demandes envoyées depuis localStorage
+    const savedSentRequests = localStorage.getItem('sentRequests');
+    if (savedSentRequests) {
+      try {
+        const sentRequestsData = JSON.parse(savedSentRequests);
+        setSentRequests(sentRequestsData);
+        console.log('📤 Demandes envoyées chargées:', sentRequestsData.length);
+      } catch (error) {
+        console.error('Erreur lors du chargement des demandes envoyées:', error);
+      }
+    }
+    
     loadContactData();
   }, []);
 
@@ -103,14 +117,30 @@ export default function ContactSection() {
     try {
       // Récupérer mes contacts depuis l'API
       const contactsData = await contactService.getMyContacts();
-      console.log('Contacts récupérés:', contactsData);
+      console.log('🔍 DONNÉES COMPLÈTES de l\'API:', contactsData);
+      console.log('🔍 Clés disponibles:', Object.keys(contactsData));
       
-      // Debug: vérifier les photos de profil dans les données
+      // Debug: vérifier toutes les propriétés des données
       if (contactsData.pending_requests) {
+        console.log('📥 Demandes REÇUES:', contactsData.pending_requests.length);
         contactsData.pending_requests.forEach(request => {
-          console.log('Demande d\'ami - utilisateur:', request.user.username, 'photo:', request.user.profile_picture);
-          console.log('Tous les champs utilisateur:', Object.keys(request.user));
-          console.log('Données complètes utilisateur:', request.user);
+          console.log('  - Demande de:', request.user.username, 'ID:', request.user.id);
+        });
+      }
+      
+      if (contactsData.sent_requests) {
+        console.log('📤 Demandes ENVOYÉES depuis API:', contactsData.sent_requests.length);
+        contactsData.sent_requests.forEach(request => {
+          console.log('  - Demande vers:', request.contact.username, 'ID:', request.contact.id);
+        });
+      } else {
+        console.log('📤 Aucune propriété sent_requests dans l\'API');
+      }
+      
+      if (contactsData.accepted_contacts) {
+        console.log('✅ Contacts ACCEPTÉS:', contactsData.accepted_contacts.length);
+        contactsData.accepted_contacts.forEach(contact => {
+          console.log('  - Ami:', contact.username, 'ID:', contact.id);
         });
       }
       
@@ -165,6 +195,66 @@ export default function ContactSection() {
       
       setContacts(formattedContacts);
       setPendingRequests(formattedRequests);
+      
+      // NOUVEAU: Gérer les demandes envoyées depuis l'API
+      const sentContactRequests = contactsData.sent_requests || [];
+      console.log('📤 Traitement des demandes envoyées depuis API:', sentContactRequests.length);
+      
+      const formattedSentRequests = sentContactRequests.map(request => {
+        const descriptionIndex = request.contact.id % requestDescriptions.length;
+        const defaultBio = requestDescriptions[descriptionIndex];
+        
+        return {
+          id: request.contact.id,
+          name: request.contact.username || `${request.contact.first_name} ${request.contact.last_name}`,
+          fullName: `${request.contact.first_name} ${request.contact.last_name}`,
+          email: request.contact.email,
+          bio: request.contact.bio || request.contact.description || defaultBio,
+          location: request.contact.location || 'Non spécifié',
+          interests: request.contact.interests ? request.contact.interests.split(',').map(i => i.trim()) : [],
+          profilePicture: request.contact.profile_picture || request.contact.profilePicture || request.contact.avatar || request.contact.image || request.contact.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(request.contact.username || 'User')}&background=70D9FF&color=fff&size=128&rounded=true&bold=true`,
+          status: 'sent',
+          sentAt: request.created_at || new Date().toISOString()
+        };
+      });
+      
+      // Fusionner avec les demandes envoyées du localStorage
+      const currentSentFromStorage = JSON.parse(localStorage.getItem('sentRequests') || '[]');
+      console.log('📤 Demandes envoyées depuis localStorage:', currentSentFromStorage.length);
+      
+      // OBTENIR L'ID DE L'UTILISATEUR ACTUEL POUR ÉVITER L'AUTO-AJOUT
+      const currentUserId = parseInt(localStorage.getItem('userId'));
+      
+      // Créer une map pour éviter les doublons
+      const sentRequestsMap = new Map();
+      
+      // Ajouter les demandes de l'API d'abord (priorité) - avec protection anti-auto-ajout
+      formattedSentRequests.forEach(request => {
+        if (request.id !== currentUserId) {
+          sentRequestsMap.set(request.id, request);
+          console.log('📤 Ajout demande API:', request.name);
+        } else {
+          console.log('❌ Auto-ajout détecté depuis API - ignoré:', request.name);
+        }
+      });
+      
+      // Ajouter les demandes du localStorage qui ne sont pas dans l'API - avec protection anti-auto-ajout
+      currentSentFromStorage.forEach(request => {
+        if (request.id !== currentUserId && !sentRequestsMap.has(request.id)) {
+          sentRequestsMap.set(request.id, request);
+          console.log('📤 Ajout demande localStorage:', request.name);
+        } else if (request.id === currentUserId) {
+          console.log('❌ Auto-ajout détecté depuis localStorage - ignoré:', request.name);
+        }
+      });
+      
+      const finalSentRequests = Array.from(sentRequestsMap.values());
+      console.log('📤 Total demandes envoyées finales:', finalSentRequests.length);
+      
+      setSentRequests(finalSentRequests);
+      
+      // Sauvegarder la liste fusionnée dans localStorage (déjà nettoyée des auto-ajouts)
+      localStorage.setItem('sentRequests', JSON.stringify(finalSentRequests));
       
       // Ajouter les utilisateurs des demandes d'ami à la liste persistante
       if (formattedRequests.length > 0) {
@@ -284,18 +374,63 @@ export default function ContactSection() {
     }
   };
 
-  // Filtrer les utilisateurs en fonction de la recherche
-  const filteredUsers = allUsers.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.interests.some(interest => interest.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Filtrer les utilisateurs en fonction de la recherche ET exclure ceux qui ont déjà une relation
+  const filteredUsers = allUsers.filter(user => {
+    // Exclure les utilisateurs déjà amis
+    const isAlreadyFriend = contacts.some(contact => contact.id === user.id);
+    
+    // Exclure les utilisateurs qui ont une demande en attente (reçue)
+    const hasPendingRequest = pendingRequests.some(request => request.id === user.id);
+    
+    // Exclure les utilisateurs à qui on a déjà envoyé une demande
+    const hasSentRequest = sentRequests.some(request => request.id === user.id);
+    
+    // Filtrer par recherche
+    const matchesSearch = !searchQuery || (
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.interests.some(interest => interest.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+    
+    console.log(`🔍 Filtrage utilisateur ${user.name} (ID: ${user.id}):`, {
+      isAlreadyFriend,
+      hasPendingRequest,
+      hasSentRequest,
+      matchesSearch,
+      shouldShow: !isAlreadyFriend && !hasPendingRequest && !hasSentRequest && matchesSearch
+    });
+    
+    return !isAlreadyFriend && !hasPendingRequest && !hasSentRequest && matchesSearch;
+  });
 
   const handleAddContact = async (user) => {
     try {
       console.log('Envoi demande d\'ami à:', user.id);
       await contactService.sendFriendRequest(user.id);
+      
+      // Ajouter l'utilisateur à la liste des demandes envoyées
+      const newSentRequest = {
+        id: user.id,
+        name: user.name,
+        fullName: user.fullName,
+        email: user.email,
+        bio: user.bio,
+        location: user.location,
+        interests: user.interests,
+        profilePicture: user.profile_picture,
+        status: 'sent',
+        sentAt: new Date().toISOString()
+      };
+      
+      setSentRequests(prevSent => [...prevSent, newSentRequest]);
+      
+      // Sauvegarder dans localStorage pour persistance
+      const currentSent = JSON.parse(localStorage.getItem('sentRequests') || '[]');
+      const updatedSent = [...currentSent, newSentRequest];
+      localStorage.setItem('sentRequests', JSON.stringify(updatedSent));
+      
+      console.log('✅ Demande ajoutée à la liste des demandes envoyées');
       
       // Recharger les données pour mettre à jour l'affichage
       await loadContactData();
@@ -303,7 +438,80 @@ export default function ContactSection() {
       alert(`Demande d'ami envoyée à ${user.name} !`);
     } catch (error) {
       console.error('Erreur envoi demande d\'ami:', error);
-      alert('Erreur lors de l\'envoi de la demande d\'ami');
+      
+      // Si l'erreur est "Relation déjà existante", rediriger vers l'onglet Demandes
+      if (error.message.includes('Relation déjà existante')) {
+        console.log('🔄 Relation existante détectée, redirection vers l\'onglet Demandes');
+        
+        // Recharger les données pour synchroniser l'état
+        const updatedContactsData = await contactService.getMyContacts();
+        console.log('🔄 Données rechargées:', updatedContactsData);
+        
+        // Vérifier directement dans les données fraîches
+        const isInAcceptedContacts = (updatedContactsData.accepted_contacts || []).some(contact => contact.id === user.id);
+        const isInPendingRequests = (updatedContactsData.pending_requests || []).some(request => request.user.id === user.id);
+        const isInSentRequests = (updatedContactsData.sent_requests || []).some(request => request.user.id === user.id);
+        
+        console.log('🔍 Vérification dans données fraîches:', {
+          userId: user.id,
+          userName: user.name,
+          isInAcceptedContacts,
+          isInPendingRequests,
+          isInSentRequests
+        });
+        
+        // Si la personne n'est trouvée nulle part, c'est probablement une demande envoyée non trackée
+        if (!isInAcceptedContacts && !isInPendingRequests && !isInSentRequests) {
+          console.log('🤔 Personne non trouvée dans les données API - ajout aux demandes envoyées');
+          
+          // Vérifier que l'utilisateur ne s'ajoute pas lui-même
+          const currentUserId = parseInt(localStorage.getItem('userId'));
+          if (user.id === currentUserId) {
+            console.log('❌ Tentative d\'auto-ajout détectée - ignorée');
+            return;
+          }
+          
+          // Créer une entrée de demande envoyée
+          const newSentRequest = {
+            id: user.id,
+            name: user.name,
+            fullName: user.fullName,
+            email: user.email,
+            bio: user.bio,
+            location: user.location,
+            interests: user.interests,
+            profilePicture: user.profile_picture,
+            status: 'sent',
+            sentAt: new Date().toISOString()
+          };
+          
+          // Ajouter aux demandes envoyées dans localStorage
+          const currentSent = JSON.parse(localStorage.getItem('sentRequests') || '[]');
+          const updatedSent = [...currentSent, newSentRequest];
+          localStorage.setItem('sentRequests', JSON.stringify(updatedSent));
+          console.log('✅ Ajouté aux demandes envoyées dans localStorage:', user.name);
+        }
+        
+        // Recharger les données du composant maintenant
+        await loadContactData();
+        
+        // Mettre en évidence l'utilisateur et rediriger vers l'onglet Demandes
+        setHighlightedUserId(user.id);
+        setActiveTab('demandes');
+        
+        // Fermer la recherche
+        setIsSearchOpen(false);
+        
+        // Retirer la mise en évidence après 3 secondes
+        setTimeout(() => {
+          setHighlightedUserId(null);
+        }, 3000);
+        
+        console.log('✅ Redirection vers l\'onglet Demandes avec mise en évidence de l\'utilisateur ID:', user.id);
+        
+      } else {
+        alert('Erreur lors de l\'envoi de la demande d\'ami');
+      }
     }
   };
 
@@ -399,6 +607,14 @@ export default function ContactSection() {
     setSearchQuery('');
   };
 
+  // Fonction pour nettoyer le localStorage
+  const cleanLocalStorage = () => {
+    console.log('🧹 Nettoyage du localStorage...');
+    localStorage.removeItem('sentRequests');
+    localStorage.removeItem('persistentUsers');
+    console.log('✅ localStorage nettoyé');
+  };
+
   if (loading) {
     return (
       <div className="contact-page">
@@ -464,7 +680,7 @@ export default function ContactSection() {
             className={`tab-button ${activeTab === 'demandes' ? 'active' : ''}`}
             onClick={() => setActiveTab('demandes')}
           >
-            Demandes ({pendingRequests.length})
+            Demandes ({pendingRequests.length + sentRequests.length})
           </button>
         </div>
 
@@ -581,7 +797,10 @@ export default function ContactSection() {
                   <h3 className="requests-subtitle">Demandes reçues ({pendingRequests.length})</h3>
                   <div className="contacts-grid">
                     {pendingRequests.map(request => (
-                      <div key={request.contactRelationId} className="contact-card">
+                      <div 
+                        key={request.contactRelationId} 
+                        className={`contact-card ${highlightedUserId === request.id ? 'highlighted-card' : ''}`}
+                      >
                         {renderAvatar(request.profilePicture, request.name, "contact-avatar-large")}
                         <div className="contact-details">
                           <div className="contact-card-name">{request.name}</div>
@@ -611,7 +830,43 @@ export default function ContactSection() {
                   </div>
                 </div>
               ) : (
-                <p className="no-requests-message">Aucune demande d'ami en attente</p>
+                <p className="no-requests-message">Aucune demande d'ami reçue</p>
+              )}
+              
+              {/* NOUVELLE SECTION: Demandes envoyées */}
+              {sentRequests.length > 0 && (
+                <div className="sent-requests-list">
+                  <h3 className="requests-subtitle">Demandes envoyées ({sentRequests.length})</h3>
+                  <div className="contacts-grid">
+                    {sentRequests.map(request => (
+                      <div 
+                        key={request.id} 
+                        className={`contact-card sent-request-card ${highlightedUserId === request.id ? 'highlighted-card' : ''}`}
+                      >
+                        {renderAvatar(request.profilePicture, request.name, "contact-avatar-large")}
+                        <div className="contact-details">
+                          <div className="contact-card-name">{request.name}</div>
+                          <div className="contact-card-info">{request.bio}</div>
+                          <div className="contact-interests">
+                            {request.interests && request.interests.map((interest, index) => (
+                              <span key={index} className="interest-tag">{interest}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="request-status">
+                          <span className="status-badge sent-badge">En attente</span>
+                          <small className="sent-date">
+                            Envoyée le {new Date(request.sentAt).toLocaleDateString('fr-FR')}
+                          </small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {pendingRequests.length === 0 && sentRequests.length === 0 && (
+                <p className="no-requests-message">Aucune demande d'ami</p>
               )}
             </div>
           )}

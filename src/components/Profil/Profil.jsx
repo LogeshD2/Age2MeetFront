@@ -327,9 +327,9 @@ const ProfileSection = () => {
           <div className="profile-image-wrapper">
             <div className="profile-picture-container">
               {profilePicture ? (
-                <img 
+          <img 
                   src={profilePicture.startsWith('http') ? profilePicture : `http://localhost:8000${profilePicture}`}
-                  alt="Photo de profil" 
+            alt="Photo de profil" 
                   className="profile-picture"
                 />
               ) : (

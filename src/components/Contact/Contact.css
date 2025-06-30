@@ -220,7 +220,8 @@
   align-items: center;
   position: absolute;
   top: 15px;
-  right: 15px;
+  right: 5px;
+  z-index: 2;
 }
 
 .message-contact-btn {
@@ -265,6 +266,19 @@
 .remove-contact-btn:hover {
   background: #ff3742;
   transform: scale(1.1);
+}
+
+/* Auto-repositioning for screens where content might overflow */
+@media (max-width: 1200px) {
+  .contact-actions {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 15px;
+    gap: 15px;
+    top: auto;
+    right: auto;
+  }
 }
 
 /* Section recherche d'utilisateurs */
@@ -533,13 +547,13 @@
 @media (max-width: 768px) {
   .contact-page {
     padding: 1rem 0.5rem;
-  }
-  
+}
+
   .contact-container {
     padding: 1.5rem;
     border-radius: 25px;
-  }
-  
+}
+
   .contact-main-title {
     font-size: 2rem;
   }
@@ -557,19 +571,31 @@
   .contacts-grid, .users-grid {
     grid-template-columns: 1fr;
     gap: 15px;
-  }
+}
 
   .search-container {
     padding: 20px;
-  }
+}
 
   .search-header {
     flex-direction: row;
     gap: 15px;
-  }
+}
 
   .contact-card, .user-card {
     padding: 15px;
+}
+}
+
+@media (max-width: 1024px) {
+  .contacts-grid .contact-card .contact-actions {
+    position: static !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    margin-top: 15px !important;
+    gap: 15px !important;
+    top: auto !important;
+    right: auto !important;
   }
 }
 
@@ -593,7 +619,7 @@
     padding: 0.8rem 1.5rem;
     font-size: 0.9rem;
   }
-
+  
   .contact-card, .user-card {
     flex-direction: column;
     text-align: center;
@@ -604,14 +630,6 @@
     text-align: center;
   }
 
-  .contact-actions {
-    position: static;
-    flex-direction: row;
-    justify-content: center;
-    margin-top: 10px;
-    gap: 12px;
-  }
-
   .search-input {
     padding: 12px 16px;
     font-size: 15px;
@@ -619,5 +637,162 @@
 
   .search-container {
     padding: 15px;
+  }
+}
+
+/* === NOUVEAUX STYLES POUR LA MISE EN ÉVIDENCE ET DEMANDES ENVOYÉES === */
+
+/* Effet de mise en évidence pour les cartes */
+.highlighted-card {
+  border-color: #FFA726 !important;
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFCC80 100%) !important;
+  box-shadow: 0 8px 25px rgba(255, 167, 38, 0.4) !important;
+  animation: highlightPulse 2s ease-in-out;
+  transform: scale(1.02);
+}
+
+@keyframes highlightPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(255, 167, 38, 0.2);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 12px 30px rgba(255, 167, 38, 0.5);
+  }
+  100% {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(255, 167, 38, 0.4);
+  }
+}
+
+/* Styles pour les demandes envoyées */
+.sent-request-card {
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  border: 2px solid #2196F3;
+}
+
+.sent-request-card:hover {
+  border-color: #1976D2;
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+}
+
+.request-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sent-badge {
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  color: #E65100;
+  border: 1px solid #FF9800;
+}
+
+.sent-date {
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Animation pour le changement d'onglet */
+.contact-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Styles pour les sections de demandes */
+.requests-list,
+.sent-requests-list {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.requests-subtitle {
+  font-size: 1.3rem;
+  color: #333;
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+  text-align: left;
+  padding-left: 0.5rem;
+  border-left: 4px solid #70D9FF;
+}
+
+.sent-requests-list .requests-subtitle {
+  border-left-color: #2196F3;
+}
+
+/* Message pour les demandes vides */
+.no-requests-message {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.1rem;
+  color: #999;
+  margin: 2rem 0;
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 2px dashed #ddd;
+}
+
+/* Responsive pour les nouvelles sections */
+@media (max-width: 768px) {
+  .highlighted-card {
+    transform: scale(1.01);
+  }
+  
+  @keyframes highlightPulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+    100% {
+      transform: scale(1.01);
+    }
+  }
+  
+  .requests-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .status-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+}
+
+/* === FIX DÉFINITIF POUR LES BOUTONS DE CONTACT === */
+@media (max-width: 1200px) {
+  .contact-page .contact-container .contact-content .contact-tab-content .contacts-list-container .contacts-grid .contact-card .contact-actions {
+    position: static !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    margin-top: 15px !important;
+    gap: 15px !important;
+    top: auto !important;
+    right: auto !important;
+    align-items: center !important;
   }
 }
