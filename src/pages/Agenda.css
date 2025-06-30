@@ -348,6 +348,17 @@
   line-height: 1.2;
 }
 
+.event-exact-time {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1px 4px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
 .delete-event-btn {
   position: absolute;
   top: 2px;

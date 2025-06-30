@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import './Agenda.css';
 
 const Agenda = () => {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 7)); // 7 juillet 2025
+  const [currentDate, setCurrentDate] = useState(() => {
+    // Démarrage au vrai lundi 7 juillet 2025 (le 6 juillet est un dimanche !)
+    const baseDate = new Date(2025, 6, 7); // 7 juillet 2025 (lundi)
+    console.log('📅 Date de base:', baseDate.toISOString().split('T')[0], baseDate.toLocaleDateString('fr-FR', { weekday: 'long' }));
+    return baseDate;
+  });
   const [selectedDay, setSelectedDay] = useState(7); // Jour sélectionné
   const [events, setEvents] = useState(() => {
     const savedEvents = localStorage.getItem('agendaEvents');
@@ -70,12 +75,15 @@ const Agenda = () => {
 
   // Générer les jours de la semaine
   const generateWeekDays = (startDate) => {
+    console.log('🔧 generateWeekDays - startDate:', startDate.toISOString().split('T')[0], startDate.toLocaleDateString('fr-FR', { weekday: 'long' }));
     const days = [];
     for (let i = 0; i < 6; i++) {
       const day = new Date(startDate);
       day.setDate(startDate.getDate() + i);
+      console.log(`🔧 Jour ${i}:`, day.toISOString().split('T')[0], day.toLocaleDateString('fr-FR', { weekday: 'long' }));
       days.push(day);
     }
+    console.log('🔧 generateWeekDays - résultat final:', days.map(d => d.toISOString().split('T')[0]));
     return days;
   };
 
@@ -115,12 +123,42 @@ const Agenda = () => {
   const currentMonth = currentDate.toLocaleDateString('fr-FR', { month: 'long' });
   const currentYear = currentDate.getFullYear();
 
-  // Debug pour voir les jours générés
-  console.log('WeekDays générés:', weekDays.map(day => ({ 
+  // Debug pour voir les jours générés avec alignment
+  console.log('🗓️ Debug alignment des jours:');
+  console.log('CurrentDate:', currentDate.toISOString().split('T')[0], 'Jour de la semaine:', currentDate.toLocaleDateString('fr-FR', { weekday: 'long' }));
+  console.log('WeekDays générés:', weekDays.map((day, index) => ({ 
+    index,
+    dayName: dayNames[index],
     date: day.toISOString().split('T')[0], 
     dayOfWeek: day.toLocaleDateString('fr-FR', { weekday: 'long' }),
-    dayNumber: day.getDate()
+    dayNumber: day.getDate(),
+    match: dayNames[index].toLowerCase() === day.toLocaleDateString('fr-FR', { weekday: 'long' }).toLowerCase()
   })));
+  
+  // Debug détaillé de l'alignement header vs contenu
+  console.log('🔍 Alignement Header vs Contenu:');
+  weekDays.forEach((day, index) => {
+    console.log(`Index ${index}: Header="${dayNames[index]} ${day.getDate()}" | Jour réel="${day.toLocaleDateString('fr-FR', { weekday: 'long' })} ${day.getDate()}" | Match=${dayNames[index].toLowerCase() === day.toLocaleDateString('fr-FR', { weekday: 'long' }).toLowerCase()}`);
+  });
+  
+  // Vérifier l'événement de test
+  const testEvent = events.find(e => e.isActivity);
+  if (testEvent) {
+    console.log('🎯 Événement test trouvé:', {
+      title: testEvent.title,
+      date: testEvent.date,
+      time: testEvent.time,
+      expectedDay: new Date(testEvent.date).toLocaleDateString('fr-FR', { weekday: 'long' }),
+      expectedDayNumber: new Date(testEvent.date).getDate()
+    });
+    
+    // Vérifier dans quelle colonne il devrait apparaître
+    const eventDate = new Date(testEvent.date);
+    weekDays.forEach((weekDay, index) => {
+      const isSameDay = weekDay.toISOString().split('T')[0] === testEvent.date;
+      console.log(`Colonne ${index} (${dayNames[index]}): ${weekDay.getDate()} juillet - Match: ${isSameDay}`);
+    });
+  }
 
   // Générer les créneaux horaires
   const timeSlots = [];
@@ -202,14 +240,46 @@ const Agenda = () => {
 
   const getEventsForDayAndTime = (day, timeSlot) => {
     const dayString = day.toISOString().split('T')[0];
-    const filtered = events.filter(event => 
-      event.date === dayString && 
-      event.time === timeSlot
-    );
     
-    // Debug pour voir les événements
+    // Extraire l'heure du créneau (ex: "14:00" -> 14)
+    const slotHour = parseInt(timeSlot.split(':')[0]);
+    
+    const filtered = events.filter(event => {
+      if (event.date !== dayString) return false;
+      
+      // Extraire l'heure de l'événement (ex: "14:30" -> 14)
+      const eventHour = parseInt(event.time.split(':')[0]);
+      
+      // L'événement appartient à ce créneau s'il commence dans cette heure
+      return eventHour === slotHour;
+    });
+    
+    // Debug étendu pour comprendre le problème
+    console.log(`🔍 Recherche événements pour ${dayString} à ${timeSlot} (heure ${slotHour})`);
+    console.log(`📅 Jour recherché: ${dayString}`);
+    console.log(`⏰ Heure recherchée: ${timeSlot} (heure: ${slotHour})`);
+    console.log(`📋 Tous les événements disponibles:`, events.map(e => ({
+      title: e.title,
+      date: e.date,
+      time: e.time,
+      eventHour: e.time ? parseInt(e.time.split(':')[0]) : null,
+      isActivity: e.isActivity
+    })));
+    console.log(`✅ Événements filtrés:`, filtered);
+    
     if (filtered.length > 0) {
-      console.log(`Événement trouvé pour ${dayString} à ${timeSlot}:`, filtered);
+      console.log(`✨ Événement trouvé pour ${dayString} à ${timeSlot}:`, filtered);
+    } else {
+      console.log(`❌ Aucun événement trouvé pour ${dayString} à ${timeSlot}`);
+      // Vérifier s'il y a des événements pour cette date mais à d'autres heures
+      const eventsForDay = events.filter(event => event.date === dayString);
+      if (eventsForDay.length > 0) {
+        console.log(`⚠️ Événements trouvés pour ${dayString} mais à d'autres heures:`, eventsForDay.map(e => ({
+          title: e.title,
+          time: e.time,
+          hour: e.time ? parseInt(e.time.split(':')[0]) : null
+        })));
+      }
     }
     
     return filtered;
@@ -327,7 +397,7 @@ const Agenda = () => {
                 <div className="time-column-header"></div>
                 {weekDays.map((day, index) => (
                   <div key={index} className="day-header">
-                    <div className="day-name">{dayNames[index]}</div>
+                    <div className="day-name">{day.toLocaleDateString('fr-FR', { weekday: 'long' }).toUpperCase()}</div>
                     <div className="day-number">{day.getDate()}</div>
                   </div>
                 ))}
@@ -355,6 +425,9 @@ const Agenda = () => {
                             >
                               <div className="event-title-small">
                                 {event.isActivity ? '🎯 ' : ''}{event.title}
+                              </div>
+                              <div className="event-exact-time">
+                                {event.time}
                               </div>
                               <button 
                                 className="delete-event-btn"
