@@ -1,4 +1,23 @@
 const API_BASE_URL = 'https://age2meet.onrender.com/api';
+const MEDIA_BASE_URL = 'https://age2meet.onrender.com';
+
+// Helper function pour construire les URLs d'images
+export const buildImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  
+  // Si c'est déjà une URL complète, la retourner telle quelle
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  
+  // Si c'est un chemin relatif commençant par /media/, construire l'URL complète
+  if (imagePath.startsWith('/media/')) {
+    return `${MEDIA_BASE_URL}${imagePath}`;
+  }
+  
+  // Sinon, ajouter le préfixe media
+  return `${MEDIA_BASE_URL}/media/${imagePath}`;
+};
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken');
@@ -143,4 +162,4 @@ export const profileService = {
     
     return data;
   }
-}; 
+};
