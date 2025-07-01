@@ -327,17 +327,17 @@ const ProfileSection = () => {
         <div className="profile-image-container">
           <div className="profile-image-wrapper">
             <div className="profile-picture-container">
-              {profilePicture ? (
-          <img 
-                  src={profilePicture.startsWith('http') ? profilePicture : `http://localhost:8000${profilePicture}`}
-            alt="Photo de profil" 
-                  className="profile-picture"
-                />
-              ) : (
-                <div className="profile-avatar-large">
-                  {formData.prenom ? formData.prenom.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
+                {profilePicture ? (
+                  <img 
+                    src={profilePicture}
+                    alt="Photo de profil" 
+                    className="profile-picture"
+                  />
+                ) : (
+                  <div className="profile-avatar-large">
+                    {formData.prenom ? formData.prenom.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
               
               {/* Indicateur de statut */}
               <div 
