@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { contactService, messageService, profileService } from '../../config/api';
+import { contactService, messageService, profileService, buildImageUrl } from '../../config/api';
 import './Messagerie.css';
 
 // Styles inline pour corriger les problèmes
