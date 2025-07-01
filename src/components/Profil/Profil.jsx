@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { profileService } from '../../config/api';
+import { profileService, buildImageUrl } from '../../config/api';
 import './Profil.css';
 
 const ProfileSection = () => {
