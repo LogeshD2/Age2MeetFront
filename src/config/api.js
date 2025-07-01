@@ -4,17 +4,39 @@ const MEDIA_BASE_URL = 'https://age2meet.onrender.com';
 
 // Helper function pour construire les URLs d'images
 export const buildImageUrl = (imagePath) => {
-  if (!imagePath) return null;
+  console.log('🔍 buildImageUrl appelé avec:', imagePath);
   
+  if (!imagePath) {
+    console.log('🔍 Pas d'image path, retour null');
+    return null;
+  }
+  
+  // Si l'URL est déjà complète
   if (imagePath.startsWith('http')) {
-    return imagePath;
+    console.log('🔍 URL complète détectée:', imagePath);
+    // Ajouter un timestamp pour éviter le cache
+    const separator = imagePath.includes('?') ? '&' : '?';
+    const finalUrl = `${imagePath}${separator}t=${Date.now()}`;
+    console.log('🔍 URL finale avec timestamp:', finalUrl);
+    return finalUrl;
   }
   
+  let finalUrl;
+  
+  // Si le chemin commence par /media/
   if (imagePath.startsWith('/media/')) {
-    return `${MEDIA_BASE_URL}${imagePath}`;
+    finalUrl = `${MEDIA_BASE_URL}${imagePath}`;
+  } else {
+    // Sinon, ajouter /media/ au début
+    finalUrl = `${MEDIA_BASE_URL}/media/${imagePath}`;
   }
   
-  return `${MEDIA_BASE_URL}/media/${imagePath}`;
+  // Ajouter timestamp pour éviter le cache
+  const separator = finalUrl.includes('?') ? '&' : '?';
+  finalUrl = `${finalUrl}${separator}t=${Date.now()}`;
+  
+  console.log('🔍 URL finale construite:', finalUrl);
+  return finalUrl;
 };
 
 // Fonction pour gérer la déconnexion automatique
