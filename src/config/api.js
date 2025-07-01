@@ -4,23 +4,18 @@ const MEDIA_BASE_URL = 'https://age2meet.onrender.com';
 
 // ===== FONCTION buildImageUrl CORRIGÉE =====
 export const buildImageUrl = (imagePath) => {
-  console.log('🔍 buildImageUrl appelé avec:', imagePath);
+  if (!imagePath) return null;
   
-  if (!imagePath) {
-    console.log('🔍 Pas d\'image path, retour null');
-    return null;
+  // Temporaire: utiliser une image par défaut ou un service externe
+  if (imagePath.includes('profile_pics')) {
+    // Retourner une image par défaut en attendant le fix
+    return `https://ui-avatars.com/api/?name=U&background=70D9FF&color=fff&size=200&rounded=true`;
   }
   
-  // Si l'URL est déjà complète
-  if (imagePath.startsWith('http')) {
-    console.log('🔍 URL complète détectée:', imagePath);
-    // Ajouter un timestamp pour éviter le cache
-    const separator = imagePath.includes('?') ? '&' : '?';
-    const finalUrl = `${imagePath}${separator}t=${Date.now()}`;
-    console.log('🔍 URL finale avec timestamp:', finalUrl);
-    return finalUrl;
-  }
-  
+  // Code normal...
+  const separator = imagePath.includes('?') ? '&' : '?';
+  return `${MEDIA_BASE_URL}${imagePath}${separator}t=${Date.now()}`;
+};
   let finalUrl;
   
   // Si le chemin commence par /media/
