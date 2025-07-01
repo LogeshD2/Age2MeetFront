@@ -188,10 +188,7 @@ const MessagerieSection = () => {
       const currentUserId = profileData.user.id;
       
       // Construire l'URL complète pour la photo de profil de l'utilisateur actuel
-      let currentUserAvatar = profileData.profile?.profile_picture;
-      if (currentUserAvatar && currentUserAvatar.startsWith('/media/')) {
-        currentUserAvatar = `http://localhost:8000${currentUserAvatar}`;
-      }
+      let currentUserAvatar = buildImageUrl(profileData.profile?.profile_picture);
       
       setCurrentUser({
         id: currentUserId,
@@ -249,11 +246,8 @@ const MessagerieSection = () => {
             console.log('Contact data:', contact);
             console.log('Contact profile picture found:', contactProfilePicture);
             
-            // Construire l'URL complète si nécessaire
-            let fullAvatarUrl = contactProfilePicture;
-            if (contactProfilePicture && contactProfilePicture.startsWith('/media/')) {
-              fullAvatarUrl = `http://localhost:8000${contactProfilePicture}`;
-            }
+            // Utiliser buildImageUrl pour construire l'URL correcte
+            let fullAvatarUrl = buildImageUrl(contactProfilePicture);
             
                           return {
                 id: contact.id,
@@ -440,12 +434,10 @@ const MessagerieSection = () => {
 
   // Helper function pour rendre les avatars correctement
   const renderAvatar = (avatar, name, className = "") => {
-    const isImageUrl = avatar && (avatar.includes('http') || avatar.includes('/media/'));
-    const imageUrl = isImageUrl ? 
-      (avatar.startsWith('/media/') ? `http://localhost:8000${avatar}` : avatar) : 
-      null;
+    // Utiliser buildImageUrl pour construire l'URL correcte
+    const imageUrl = buildImageUrl(avatar);
     
-    if (isImageUrl) {
+    if (imageUrl) {
       return (
         <>
           <img 
@@ -453,9 +445,12 @@ const MessagerieSection = () => {
             alt={name}
             className={className}
             onError={(e) => {
-              console.log('Image failed to load:', avatar);
+              console.log('Image failed to load:', avatar, 'Final URL:', imageUrl);
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
+            }}
+            onLoad={() => {
+              console.log('Image loaded successfully:', imageUrl);
             }}
           />
           <span 
@@ -469,7 +464,7 @@ const MessagerieSection = () => {
     } else {
       return (
         <span className={className.replace('-img', '-letter')}>
-          {avatar && !isImageUrl ? avatar : name.charAt(0).toUpperCase()}
+          {name.charAt(0).toUpperCase()}
         </span>
       );
     }
@@ -745,4 +740,4 @@ const MessagerieSection = () => {
   );
 };
 
-export default MessagerieSection; 
+export default MessagerieSection;
