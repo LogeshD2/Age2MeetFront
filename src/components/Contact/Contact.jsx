@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { contactService, userService } from '../../config/api';
+import { contactService, userService, buildImageUrl } from '../../config/api';
 import './Contact.css';
 
 export default function ContactSection() {
@@ -21,67 +21,46 @@ export default function ContactSection() {
   const navigate = useNavigate();
 
   // Helper function pour rendre les avatars correctement
-  const renderAvatar = (profilePicture, name, className = "contact-avatar-large") => {
-    console.log('renderAvatar called with:', { profilePicture, name }); // Debug log
+const renderAvatar = (profilePicture, name, className = "contact-avatar-large") => {
+  // Utiliser buildImageUrl pour construire l'URL correcte
+  const imageUrl = buildImageUrl(profilePicture);
+  
+  if (imageUrl) {
+    return (
+      <div className={className}>
+        <img 
+          src={imageUrl} 
+          alt={name}
+          className="avatar-image"
+          onError={(e) => {
+            console.log('Image failed to load:', profilePicture, 'Final URL:', imageUrl);
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
+          onLoad={() => {
+            console.log('Image loaded successfully:', imageUrl);
+          }}
+        />
+        <span 
+          className="avatar-letter" 
+          style={{display: 'none'}}
+        >
+          {name.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  } else {
+    return (
+      <div className={className}>
+        <span className="avatar-letter">
+          {name.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  }
+};
     
-    // Vérifier si nous avons une URL d'image valide
-    const isImageUrl = profilePicture && 
-      (profilePicture.includes('http') || 
-       profilePicture.includes('/media/') || 
-       profilePicture.includes('cloudinary') ||
-       profilePicture.includes('amazonaws') ||
-       profilePicture.includes('.jpg') ||
-       profilePicture.includes('.jpeg') ||
-       profilePicture.includes('.png') ||
-       profilePicture.includes('.gif') ||
-       profilePicture.includes('.webp'));
     
-    const imageUrl = isImageUrl ? 
-      (profilePicture.startsWith('/media/') ? `http://localhost:8000${profilePicture}` : profilePicture) : 
-      null;
-    
-    // Générer un avatar automatique si pas d'image
-    const autoAvatar = !isImageUrl ? 
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=70D9FF&color=fff&size=128&rounded=true&bold=true` :
-      null;
-    
-    console.log('Image URL logic:', { isImageUrl, imageUrl, autoAvatar }); // Debug log
-    
-    if (isImageUrl || autoAvatar) {
-      return (
-        <div className={className}>
-          <img 
-            src={imageUrl || autoAvatar} 
-            alt={name}
-            className="avatar-image"
-            onError={(e) => {
-              console.log('Image failed to load:', profilePicture, 'URL:', imageUrl || autoAvatar);
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-            onLoad={() => {
-              console.log('Image loaded successfully:', imageUrl || autoAvatar);
-            }}
-          />
-          <span 
-            className="avatar-letter" 
-            style={{display: 'none'}}
-          >
-            {name.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      );
-    } else {
-      console.log('Using letter avatar for:', name, 'profilePicture was:', profilePicture);
-      return (
-        <div className={className}>
-          <span className="avatar-letter">
-            {name.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      );
-    }
-  };
 
   // Charger les données au montage du composant
   useEffect(() => {
