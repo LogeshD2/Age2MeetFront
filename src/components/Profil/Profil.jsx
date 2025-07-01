@@ -238,76 +238,68 @@ const ProfileSection = () => {
   };
 
   // Fonction pour gérer l'upload de photo
-  const handlePictureUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+const handlePictureUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-    // Vérifier le type de fichier
-    if (!file.type.startsWith('image/')) {
-      setError('Veuillez sélectionner un fichier image.');
+  // Vérifier le type de fichier
+  if (!file.type.startsWith('image/')) {
+    setError('Veuillez sélectionner un fichier image.');
+    return;
+  }
+
+  // Vérifier la taille du fichier (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    setError('L\'image ne doit pas dépasser 5MB.');
+    return;
+  }
+
+  setUploadingPicture(true);
+  setError('');
+
+  try {
+    // Vérifier le token avant l'upload
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('Token d\'authentification manquant. Veuillez vous reconnecter.');
+    }
+
+    console.log('🔄 Upload de l\'image:', file.name, file.type, file.size);
+    const response = await profileService.uploadProfilePhoto(file);
+    console.log('✅ Réponse upload:', response);
+    
+    // NOUVELLE LOGIQUE: Forcer le rechargement complet du profil
+    console.log('🔄 Rechargement complet du profil pour obtenir la nouvelle image...');
+    await loadProfile(); // Recharger tout le profil
+    
+    setSuccess('Photo de profil mise à jour avec succès !');
+    
+    // Masquer le message de succès après 3 secondes
+    setTimeout(() => {
+      setSuccess('');
+    }, 3000);
+    
+  } catch (error) {
+    console.error('❌ Erreur upload image:', error);
+    
+    // Si c'est une erreur 401, rediriger vers la connexion
+    if (error.message.includes('401') || error.message.includes('Session expirée')) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      window.location.href = '/login';
       return;
     }
-
-    // Vérifier la taille du fichier (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('L\'image ne doit pas dépasser 5MB.');
-      return;
+    
+    setError(error.message || 'Erreur lors de l\'upload de l\'image');
+  } finally {
+    setUploadingPicture(false);
+    // Réinitialiser l'input file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
-
-    setUploadingPicture(true);
-    setError('');
-
-    try {
-      // Vérifier le token avant l'upload
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        throw new Error('Token d\'authentification manquant. Veuillez vous reconnecter.');
-      }
-
-      console.log('Upload de l\'image:', file.name);
-      const response = await profileService.uploadProfilePhoto(file);
-      console.log('Image uploadée:', response);
-      
-      // Mettre à jour la photo de profil selon la structure de réponse
-      if (response.profile && response.profile.profile_picture) {
-        const newPictureUrl = buildImageUrl(response.profile.profile_picture);
-        setProfilePicture(newPictureUrl);
-      } else if (response.profile_picture) {
-        const newPictureUrl = buildImageUrl(response.profile_picture);
-        setProfilePicture(newPictureUrl);
-      } else {
-        // Recharger le profil complet pour être sûr
-        await loadProfile();
-      }
-      
-      setSuccess('Photo de profil mise à jour avec succès !');
-      
-      // Masquer le message de succès après 3 secondes
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Erreur upload image:', error);
-      
-      // Si c'est une erreur 401, rediriger vers la connexion
-      if (error.message.includes('401') || error.message.includes('Session expirée')) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
-        window.location.href = '/login';
-        return;
-      }
-      
-      setError(error.message || 'Erreur lors de l\'upload de l\'image');
-    } finally {
-      setUploadingPicture(false);
-      // Réinitialiser l'input file
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
+  }
+};
 
   if (loading) {
     return (
