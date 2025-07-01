@@ -1,3 +1,4 @@
+// src/config/api.js - Version avec gestion des erreurs 401
 const API_BASE_URL = 'https://age2meet.onrender.com/api';
 const MEDIA_BASE_URL = 'https://age2meet.onrender.com';
 
@@ -5,22 +6,35 @@ const MEDIA_BASE_URL = 'https://age2meet.onrender.com';
 export const buildImageUrl = (imagePath) => {
   if (!imagePath) return null;
   
-  // Si c'est déjà une URL complète, la retourner telle quelle
   if (imagePath.startsWith('http')) {
     return imagePath;
   }
   
-  // Si c'est un chemin relatif commençant par /media/, construire l'URL complète
   if (imagePath.startsWith('/media/')) {
     return `${MEDIA_BASE_URL}${imagePath}`;
   }
   
-  // Sinon, ajouter le préfixe media
   return `${MEDIA_BASE_URL}/media/${imagePath}`;
+};
+
+// Fonction pour gérer la déconnexion automatique
+const handleUnauthorized = () => {
+  console.log('❌ Token invalide ou expiré - déconnexion automatique');
+  
+  // Supprimer toutes les données de session
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('username');
+  
+  // Rediriger vers la page de connexion
+  window.location.href = '/login';
 };
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken');
+  
+  // Debug: afficher le token utilisé
+  console.log('🔑 Token utilisé:', token ? `${token.substring(0, 10)}...` : 'AUCUN TOKEN');
   
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -32,6 +46,21 @@ export const apiRequest = async (endpoint, options = {}) => {
       ...options,
     });
     
+    // Gestion spécifique de l'erreur 401
+    if (response.status === 401) {
+      console.error('❌ Erreur 401: Token non autorisé');
+      
+      // Si c'est une tentative de connexion qui échoue, ne pas déconnecter
+      if (endpoint.includes('/auth/login/')) {
+        const data = await response.json();
+        throw new Error(data.error || 'Email ou mot de passe incorrect');
+      }
+      
+      // Pour toutes les autres requêtes, déconnecter l'utilisateur
+      handleUnauthorized();
+      throw new Error('Session expirée, veuillez vous reconnecter');
+    }
+    
     const data = await response.json();
     
     if (!response.ok) {
@@ -40,7 +69,7 @@ export const apiRequest = async (endpoint, options = {}) => {
     
     return data;
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('🚨 API Error:', error);
     throw error;
   }
 };
@@ -62,20 +91,27 @@ export const authService = {
   },
   
   logout: async () => {
-    return await apiRequest('/auth/logout/', {
-      method: 'POST',
-    });
+    try {
+      await apiRequest('/auth/logout/', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.log('Erreur lors de la déconnexion côté serveur, déconnexion locale uniquement');
+    } finally {
+      // Toujours nettoyer les données locales
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+    }
   }
 };
 
 // Services pour les contacts
 export const contactService = {
-  // Récupérer mes contacts
   getMyContacts: async () => {
     return await apiRequest('/contacts/');
   },
   
-  // Envoyer une demande d'ami
   sendFriendRequest: async (contactId) => {
     return await apiRequest('/contacts/', {
       method: 'POST',
@@ -83,15 +119,13 @@ export const contactService = {
     });
   },
   
-  // Accepter/refuser une demande d'ami
   respondToFriendRequest: async (contactId, action) => {
     return await apiRequest(`/contacts/${contactId}/action/`, {
       method: 'PUT',
-      body: JSON.stringify({ action }), // 'accept' ou 'decline'
+      body: JSON.stringify({ action }),
     });
   },
   
-  // Retirer/supprimer un ami
   removeContact: async (contactId) => {
     return await apiRequest(`/contacts/${contactId}/`, {
       method: 'DELETE',
@@ -101,20 +135,17 @@ export const contactService = {
 
 // Services pour les utilisateurs
 export const userService = {
-  // Récupérer tous les utilisateurs (pour suggestions)
   getAllUsers: async () => {
-    return await apiRequest('/home/'); // Endpoint qui retourne suggested_contacts
+    return await apiRequest('/home/');
   }
 };
 
 // Services pour la messagerie
 export const messageService = {
-  // Récupérer les messages avec un utilisateur
   getMessages: async (userId) => {
     return await apiRequest(`/messages/?user_id=${userId}`);
   },
   
-  // Envoyer un message
   sendMessage: async (receiverId, content) => {
     return await apiRequest('/messages/', {
       method: 'POST',
@@ -125,12 +156,10 @@ export const messageService = {
 
 // Services pour le profil utilisateur
 export const profileService = {
-  // Récupérer le profil de l'utilisateur connecté
   getProfile: async () => {
     return await apiRequest('/profile/');
   },
   
-  // Mettre à jour le profil
   updateProfile: async (profileData) => {
     return await apiRequest('/profile/', {
       method: 'PUT',
@@ -138,9 +167,12 @@ export const profileService = {
     });
   },
   
-  // Upload photo de profil
   uploadProfilePhoto: async (imageFile) => {
     const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      throw new Error('Token d\'authentification manquant');
+    }
     
     const formData = new FormData();
     formData.append('profile_picture', imageFile);
@@ -148,11 +180,15 @@ export const profileService = {
     const response = await fetch(`${API_BASE_URL}/profile/`, {
       method: 'PUT',
       headers: {
-        'Authorization': token ? `Token ${token}` : '',
-        // Ne pas spécifier Content-Type pour FormData
+        'Authorization': `Token ${token}`,
       },
       body: formData,
     });
+    
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error('Session expirée, veuillez vous reconnecter');
+    }
     
     const data = await response.json();
     
