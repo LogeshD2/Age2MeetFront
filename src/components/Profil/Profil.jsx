@@ -86,8 +86,9 @@ const ProfileSection = () => {
         interests: profileData.profile.interests || ''
       });
       
-      // Définir la photo de profil
-      setProfilePicture(profileData.profile?.profile_picture || null);
+      // Définir la photo de profil avec l'URL complète
+      const profilePictureUrl = buildImageUrl(profileData.profile?.profile_picture);
+      setProfilePicture(profilePictureUrl);
       
       // Définir le statut utilisateur
       setUserStatus(profileData.profile.status || 'online');
