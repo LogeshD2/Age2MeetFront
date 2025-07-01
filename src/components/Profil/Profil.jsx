@@ -62,7 +62,12 @@ const ProfileSection = () => {
 
   // Charger le profil au montage du composant
   useEffect(() => {
-    loadProfile();
+    // Ajouter un petit délai pour s'assurer que le token est bien sauvegardé
+    const timer = setTimeout(() => {
+      loadProfile();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const loadProfile = async () => {
@@ -70,6 +75,17 @@ const ProfileSection = () => {
     setError('');
     
     try {
+      // Debug : vérifier le token avant la requête
+      const token = localStorage.getItem('authToken');
+      console.log('🔍 DEBUG PROFIL:');
+      console.log('- Token:', token ? `${token.substring(0, 10)}...` : 'AUCUN TOKEN');
+      console.log('- UserId:', localStorage.getItem('userId'));
+      console.log('- Username:', localStorage.getItem('username'));
+      
+      if (!token) {
+        throw new Error('Token d\'authentification manquant. Veuillez vous reconnecter.');
+      }
+
       const profileData = await profileService.getProfile();
       console.log('Profil récupéré:', profileData);
       
@@ -95,6 +111,16 @@ const ProfileSection = () => {
       
     } catch (error) {
       console.error('Erreur lors du chargement du profil:', error);
+      
+      // Si c'est une erreur 401, rediriger vers la connexion
+      if (error.message.includes('401') || error.message.includes('Session expirée')) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        window.location.href = '/login';
+        return;
+      }
+      
       setError('Impossible de charger votre profil. Veuillez vous reconnecter.');
     } finally {
       setLoading(false);
@@ -133,6 +159,12 @@ const ProfileSection = () => {
     setSuccess('');
     
     try {
+      // Vérifier le token avant de faire la requête
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant. Veuillez vous reconnecter.');
+      }
+
       // Préparer les données pour l'API
       const updateData = {
         first_name: formData.prenom,
@@ -159,6 +191,16 @@ const ProfileSection = () => {
       
     } catch (error) {
       console.error('Erreur mise à jour profil:', error);
+      
+      // Si c'est une erreur 401, rediriger vers la connexion
+      if (error.message.includes('401') || error.message.includes('Session expirée')) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        window.location.href = '/login';
+        return;
+      }
+      
       setError(error.message || 'Erreur lors de la mise à jour du profil');
     } finally {
       setSaving(false);
@@ -216,15 +258,23 @@ const ProfileSection = () => {
     setError('');
 
     try {
+      // Vérifier le token avant l'upload
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant. Veuillez vous reconnecter.');
+      }
+
       console.log('Upload de l\'image:', file.name);
       const response = await profileService.uploadProfilePhoto(file);
       console.log('Image uploadée:', response);
       
       // Mettre à jour la photo de profil selon la structure de réponse
       if (response.profile && response.profile.profile_picture) {
-        setProfilePicture(response.profile.profile_picture);
+        const newPictureUrl = buildImageUrl(response.profile.profile_picture);
+        setProfilePicture(newPictureUrl);
       } else if (response.profile_picture) {
-        setProfilePicture(response.profile_picture);
+        const newPictureUrl = buildImageUrl(response.profile_picture);
+        setProfilePicture(newPictureUrl);
       } else {
         // Recharger le profil complet pour être sûr
         await loadProfile();
@@ -239,6 +289,16 @@ const ProfileSection = () => {
       
     } catch (error) {
       console.error('Erreur upload image:', error);
+      
+      // Si c'est une erreur 401, rediriger vers la connexion
+      if (error.message.includes('401') || error.message.includes('Session expirée')) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        window.location.href = '/login';
+        return;
+      }
+      
       setError(error.message || 'Erreur lors de l\'upload de l\'image');
     } finally {
       setUploadingPicture(false);
@@ -327,17 +387,17 @@ const ProfileSection = () => {
         <div className="profile-image-container">
           <div className="profile-image-wrapper">
             <div className="profile-picture-container">
-                {profilePicture ? (
-                  <img 
-                    src={profilePicture}
-                    alt="Photo de profil" 
-                    className="profile-picture"
-                  />
-                ) : (
-                  <div className="profile-avatar-large">
-                    {formData.prenom ? formData.prenom.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                )}
+              {profilePicture ? (
+                <img 
+                  src={profilePicture}
+                  alt="Photo de profil" 
+                  className="profile-picture"
+                />
+              ) : (
+                <div className="profile-avatar-large">
+                  {formData.prenom ? formData.prenom.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
               
               {/* Indicateur de statut */}
               <div 
