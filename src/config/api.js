@@ -1,13 +1,13 @@
-// src/config/api.js - Version avec gestion des erreurs 401
+// ===== DÉFINITIONS DES CONSTANTES D'ABORD =====
 const API_BASE_URL = 'https://age2meet.onrender.com/api';
 const MEDIA_BASE_URL = 'https://age2meet.onrender.com';
 
-// Helper function pour construire les URLs d'images
+// ===== FONCTION buildImageUrl CORRIGÉE =====
 export const buildImageUrl = (imagePath) => {
   console.log('🔍 buildImageUrl appelé avec:', imagePath);
   
   if (!imagePath) {
-    console.log('🔍 Pas d'image path, retour null');
+    console.log('🔍 Pas d\'image path, retour null');
     return null;
   }
   
@@ -39,7 +39,7 @@ export const buildImageUrl = (imagePath) => {
   return finalUrl;
 };
 
-// Fonction pour gérer la déconnexion automatique
+// ===== FONCTION handleUnauthorized =====
 const handleUnauthorized = () => {
   console.log('❌ Token invalide ou expiré - déconnexion automatique');
   
@@ -52,6 +52,7 @@ const handleUnauthorized = () => {
   window.location.href = '/login';
 };
 
+// ===== FONCTION apiRequest =====
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken');
   
@@ -96,7 +97,7 @@ export const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
-// Services d'authentification
+// ===== SERVICES D'AUTHENTIFICATION =====
 export const authService = {
   register: async (userData) => {
     return await apiRequest('/auth/register/', {
@@ -128,7 +129,7 @@ export const authService = {
   }
 };
 
-// Services pour les contacts
+// ===== SERVICES POUR LES CONTACTS =====
 export const contactService = {
   getMyContacts: async () => {
     return await apiRequest('/contacts/');
@@ -155,14 +156,14 @@ export const contactService = {
   }
 };
 
-// Services pour les utilisateurs
+// ===== SERVICES POUR LES UTILISATEURS =====
 export const userService = {
   getAllUsers: async () => {
     return await apiRequest('/home/');
   }
 };
 
-// Services pour la messagerie
+// ===== SERVICES POUR LA MESSAGERIE =====
 export const messageService = {
   getMessages: async (userId) => {
     return await apiRequest(`/messages/?user_id=${userId}`);
@@ -176,7 +177,7 @@ export const messageService = {
   }
 };
 
-// Services pour le profil utilisateur
+// ===== SERVICES POUR LE PROFIL UTILISATEUR =====
 export const profileService = {
   getProfile: async () => {
     return await apiRequest('/profile/');
@@ -196,16 +197,26 @@ export const profileService = {
       throw new Error('Token d\'authentification manquant');
     }
     
+    console.log('📤 Upload de la photo:', imageFile.name, imageFile.type);
+    
     const formData = new FormData();
     formData.append('profile_picture', imageFile);
+    
+    // Log du contenu du FormData pour debug
+    for (let pair of formData.entries()) {
+      console.log('📤 FormData:', pair[0], pair[1]);
+    }
     
     const response = await fetch(`${API_BASE_URL}/profile/`, {
       method: 'PUT',
       headers: {
         'Authorization': `Token ${token}`,
+        // Ne PAS définir Content-Type pour FormData, le navigateur le fait automatiquement
       },
       body: formData,
     });
+    
+    console.log('📡 Réponse serveur status:', response.status);
     
     if (response.status === 401) {
       handleUnauthorized();
@@ -213,6 +224,7 @@ export const profileService = {
     }
     
     const data = await response.json();
+    console.log('📦 Données reçues du serveur:', data);
     
     if (!response.ok) {
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
